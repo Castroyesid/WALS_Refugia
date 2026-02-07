@@ -1,0 +1,1650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WALS Refugia Analysis Tool</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:ital,wght@0,300;0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f4f3ef; --card: #ffffff; --card-border: #e2e0d8;
+  --text: #1a1a18; --text-muted: #6b6960;
+  --accent: #2d5f8a; --accent-light: #e8f0f7;
+  --enriched: #1a7a4c; --depleted: #b44332; --neutral: #7a7568;
+  --font-body: 'Libre Franklin', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Consolas', monospace;
+  --radius: 6px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:var(--font-body); background:var(--bg); color:var(--text); font-size:14px; line-height:1.5; overflow:hidden; height:100vh; }
+.app { display:flex; flex-direction:column; height:100vh; }
+.header { display:flex; align-items:center; gap:12px; padding:10px 16px; background:#1a1f2e; color:#e8e6df; flex-shrink:0; z-index:1000; flex-wrap:wrap; }
+.header h1 { font-size:15px; font-weight:600; letter-spacing:0.02em; white-space:nowrap; }
+.header-controls { display:flex; align-items:center; gap:8px; flex:1; flex-wrap:wrap; }
+.header select,.header button { font-family:var(--font-mono); font-size:12px; padding:5px 10px; border-radius:var(--radius); border:1px solid rgba(255,255,255,0.15); background:rgba(255,255,255,0.08); color:#e8e6df; cursor:pointer; }
+.header button:hover { background:rgba(255,255,255,0.15); }
+.btn-primary { background:var(--accent)!important; border-color:var(--accent)!important; color:white!important; font-weight:500; }
+.btn-primary:hover { filter:brightness(1.15); }
+.file-label { display:inline-block; padding:5px 10px; border-radius:var(--radius); border:1px solid rgba(255,255,255,0.15); background:rgba(255,255,255,0.08); color:#e8e6df; font-family:var(--font-mono); font-size:12px; cursor:pointer; }
+.file-label:hover { background:rgba(255,255,255,0.15); }
+.file-label input { display:none; }
+.header-spacer { flex:1; }
+.data-status { font-family:var(--font-mono); font-size:11px; opacity:0.7; }
+select option { background:#1a1f2e; color:#e8e6df; }
+.main { display:flex; flex:1; overflow:hidden; }
+#map { flex:1; min-width:0; z-index:1; }
+.sidebar { width:400px; flex-shrink:0; background:var(--card); border-left:1px solid var(--card-border); overflow-y:auto; z-index:2; }
+.section { border-bottom:1px solid var(--card-border); }
+.section-header { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; cursor:pointer; user-select:none; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted); }
+.section-header:hover { background:var(--accent-light); }
+.section-body { padding:10px 14px 14px; }
+.section-body.collapsed { display:none; }
+.region-toggle { display:flex; align-items:center; gap:8px; padding:4px 0; font-size:13px; }
+.region-toggle input[type="checkbox"] { accent-color:var(--accent); cursor:pointer; flex-shrink:0; }
+.region-swatch { width:12px; height:12px; border-radius:3px; display:inline-block; flex-shrink:0; }
+.region-label { flex:1; cursor:default; }
+.region-label.editable { cursor:text; }
+.region-label.editable:hover { text-decoration:underline dotted var(--text-muted); }
+.region-label-input { font-family:var(--font-body); font-size:13px; border:1px solid var(--accent); border-radius:3px; padding:0 4px; width:100%; outline:none; }
+.region-count { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); flex-shrink:0; }
+.region-group-label { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-muted); padding:6px 0 2px; margin-top:4px; border-top:1px solid #f0efe9; }
+.region-group-label:first-child { border-top:none; margin-top:0; }
+.rg-header { display:flex; align-items:center; gap:4px; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-muted); padding:6px 0 2px; margin-top:4px; border-top:1px solid #f0efe9; cursor:pointer; user-select:none; }
+.rg-header:hover { color:var(--accent); }
+.rg-arrow { font-size:8px; transition:transform 0.15s ease; display:inline-block; width:10px; }
+.rg-controls { margin-left:auto; font-size:9px; font-weight:500; letter-spacing:0; text-transform:none; }
+.rg-controls a { color:var(--accent); text-decoration:none; cursor:pointer; }
+.rg-controls a:hover { text-decoration:underline; }
+.rg-body { overflow:hidden; }
+.rg-body.rg-collapsed { display:none; }
+.stats-table { width:100%; border-collapse:collapse; font-size:12px; margin-top:6px; }
+.stats-table-wrap { overflow-x:auto; }
+.stats-table th { font-family:var(--font-mono); font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-muted); text-align:left; padding:4px 6px; border-bottom:2px solid var(--card-border); }
+.stats-table th.num { text-align:right; }
+.stats-table td { padding:5px 6px; border-bottom:1px solid #f0efe9; font-size:12px; }
+.stats-table td.num { font-family:var(--font-mono); font-size:11px; text-align:right; font-weight:500; }
+.stats-table tr.baseline { color:var(--text-muted); font-style:italic; }
+.enriched { color:var(--enriched); font-weight:600; }
+.depleted { color:var(--depleted); font-weight:600; }
+.neutral-val { color:var(--neutral); }
+.status-bar { padding:8px 14px; font-size:11px; color:var(--text-muted); font-family:var(--font-mono); background:#fafaf7; border-bottom:1px solid var(--card-border); }
+.loading-spinner { display:inline-block; width:12px; height:12px; border:2px solid var(--card-border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; vertical-align:middle; margin-right:6px; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.empty-state { padding:20px 14px; text-align:center; color:var(--text-muted); font-size:12px; }
+.cooc-chip { padding:3px 8px; border-radius:var(--radius); border:1px solid var(--card-border); font-size:11px; font-family:var(--font-mono); cursor:pointer; background:white; display:inline-block; margin:2px; }
+.cooc-chip.active { background:var(--accent-light); border-color:var(--accent); color:var(--accent); }
+.analysis-actions { display:flex; gap:6px; margin-top:8px; }
+.btn-sm { font-family:var(--font-mono); font-size:11px; padding:4px 10px; border-radius:var(--radius); border:1px solid var(--card-border); background:white; cursor:pointer; font-weight:500; }
+.btn-sm:hover { background:var(--accent-light); }
+.btn-sm.running { opacity:0.6; pointer-events:none; }
+.sidebar::-webkit-scrollbar { width:6px; }
+.sidebar::-webkit-scrollbar-track { background:transparent; }
+.sidebar::-webkit-scrollbar-thumb { background:#d0cec6; border-radius:3px; }
+.lang-tooltip { font-family:var(--font-body); font-size:12px; line-height:1.4; }
+.lang-tooltip strong { font-weight:600; }
+.lang-tooltip .tt-detail { color:var(--text-muted); font-size:11px; }
+.lang-tooltip .tt-value { font-family:var(--font-mono); font-size:11px; margin-top:2px; }
+.map-legend { background:white; padding:8px 12px; border-radius:var(--radius); box-shadow:var(--shadow); font-size:11px; line-height:1.8; max-height:320px; overflow-y:auto; }
+.map-legend-item { display:flex; align-items:center; gap:6px; cursor:pointer; padding:1px 2px; border-radius:3px; }
+.map-legend-item:hover { background:#f8f7f4; }
+.map-legend-item.hidden { opacity:.35; }
+.map-legend-cb { width:13px; height:13px; accent-color:var(--accent); cursor:pointer; flex-shrink:0; }
+.map-legend-dot { width:10px; height:10px; border-radius:50%; border:1px solid rgba(0,0,0,0.2); flex-shrink:0; }
+.upload-help { font-size:11px; color:var(--text-muted); margin-top:6px; padding:8px 10px; background:#fafaf7; border-radius:var(--radius); border:1px solid var(--card-border); line-height:1.6; }
+.upload-help code { font-family:var(--font-mono); font-size:10px; background:#eae9e3; padding:1px 4px; border-radius:2px; }
+.enrichment-controls { display:flex; gap:10px; align-items:center; margin-bottom:6px; }
+.region-col { font-size:10px!important; color:var(--text-muted); }
+.composite-row { background:#f8f7f4; font-style:italic; }
+.composite-row td:first-child { padding-left:8px; }
+.composite-actions { margin-top:6px; }
+.region-tooltip { font-size:12px; line-height:1.4; max-width:250px; }
+.btn-x { background:none; border:none; color:var(--depleted); cursor:pointer; font-size:14px; font-weight:600; padding:0 4px; opacity:0.5; }
+.btn-x:hover { opacity:1; }
+.debug-log { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); margin-top:6px; max-height:120px; overflow-y:auto; padding:4px 6px; background:#fafaf7; border-radius:var(--radius); border:1px solid var(--card-border); white-space:pre-wrap; }
+@media (max-width:900px) { .main{flex-direction:column;} .sidebar{width:100%;max-height:50vh;} #map{min-height:50vh;} }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>WALS Refugia Analysis</h1>
+    <div class="header-controls">
+      <label class="file-label" title="Upload TSV or CSV from WALS">📁 Upload Data<input type="file" id="fileUpload" accept=".csv,.tsv,.tab,.txt" onchange="App.handleUpload(event)"></label>
+      <span class="header-spacer"></span>
+      <span>Chapter:</span>
+      <select id="chapterSelect" onchange="App.selectChapter(this.value)" disabled><option value="">— upload data —</option></select>
+      <span class="data-status" id="dataStatus">No data loaded</span>
+    </div>
+  </div>
+  <div class="main">
+    <div id="map"></div>
+    <div class="sidebar" id="sidebar">
+      <div class="status-bar" id="statusBar">Upload a WALS chapter (tab-separated values) to begin.</div>
+
+      <!-- HELP -->
+      <div class="section">
+        <div class="section-header" onclick="UI.toggleSection('help')">How to Load Data <span class="arrow" id="arrowHelp">▼</span></div>
+        <div class="section-body collapsed" id="bodyHelp">
+          <div class="upload-help">
+            <strong>From WALS:</strong><br>
+            1. Go to a WALS feature page (e.g. <code>wals.info/feature/2A</code>)<br>
+            2. Click "Download" → <code>tab-separated values</code><br>
+            3. Open in a text editor or spreadsheet, remove metadata rows above the header<br>
+            4. Header should contain: <code>wals code</code>, <code>name</code>, <code>value</code>, <code>description</code>, <code>latitude</code>, <code>longitude</code>, <code>genus</code>, <code>family</code><br>
+            5. Save as TSV/CSV and upload
+          </div>
+          <div class="debug-log" id="debugLog" style="display:none"></div>
+        </div>
+      </div>
+
+      <!-- REGIONS -->
+      <div class="section">
+        <div class="section-header" onclick="UI.toggleSection('regions')">Refugia Regions <span class="arrow" id="arrowRegions">▼</span></div>
+        <div class="section-body" id="bodyRegions">
+          <div id="regionToggles"></div>
+          <div style="margin-top:8px;font-size:11px;color:var(--text-muted)">Draw custom regions with the polygon/rectangle tools on the map. Double-click a custom region name to rename it.</div>
+        </div>
+      </div>
+
+      <!-- ENRICHMENT -->
+      <div class="section">
+        <div class="section-header" onclick="UI.toggleSection('enrichment')">Enrichment Analysis <span class="arrow" id="arrowEnrichment">▼</span></div>
+        <div class="section-body" id="bodyEnrichment">
+          <div id="enrichmentResults"><div class="empty-state"><p>Upload and select a chapter.</p></div></div>
+        </div>
+      </div>
+
+      <!-- SENSITIVITY -->
+      <div class="section">
+        <div class="section-header" onclick="UI.toggleSection('sensitivity')">Sensitivity Analysis <span class="arrow" id="arrowSensitivity">▼</span></div>
+        <div class="section-body collapsed" id="bodySensitivity">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Toggle regions on/off and take snapshots to compare enrichment across boundary definitions.</div>
+          <div class="analysis-actions" style="margin-bottom:8px">
+            <button class="btn-sm btn-primary" id="btnSnapshot" onclick="App.takeSnapshot()" disabled>Save Snapshot</button>
+            <button class="btn-sm" onclick="App.clearSnapshots()">Clear All</button>
+          </div>
+          <div id="sensitivityResults"><div class="empty-state"><p>Take snapshots with different region settings.</p></div></div>
+        </div>
+      </div>
+
+      <!-- MORAN -->
+      <div class="section">
+        <div class="section-header" onclick="UI.toggleSection('moran')">Spatial Autocorrelation (Moran's I) <span class="arrow" id="arrowMoran">▼</span></div>
+        <div class="section-body collapsed" id="bodyMoran">
+          <div id="moranResults"><div class="empty-state"><p>Compute spatial clustering.</p></div></div>
+          <div class="analysis-actions"><button class="btn-sm btn-primary" id="btnMoran" onclick="App.computeMoran()" disabled>Compute Moran's I</button></div>
+        </div>
+      </div>
+
+      <!-- PHYLO -->
+      <div class="section">
+        <div class="section-header" onclick="UI.toggleSection('phylo')">Phylogenetic Control <span class="arrow" id="arrowPhylo">▼</span></div>
+        <div class="section-body collapsed" id="bodyPhylo">
+          <div id="phyloResults"><div class="empty-state"><p>Compute family-level enrichment.</p></div></div>
+          <div class="analysis-actions"><button class="btn-sm btn-primary" id="btnPhylo" onclick="App.computePhylo()" disabled>Compute Phylogenetic Control</button></div>
+        </div>
+      </div>
+
+      <!-- CO-OCC -->
+      <div class="section">
+        <div class="section-header" onclick="UI.toggleSection('cooc')">Co-occurrence Analysis <span class="arrow" id="arrowCooc">▼</span></div>
+        <div class="section-body collapsed" id="bodyCooc">
+          <div id="coocChapters" style="margin-bottom:6px"></div>
+          <div id="coocResults"><div class="empty-state"><p>Load ≥2 chapters to cross-tabulate.</p></div></div>
+          <div class="analysis-actions"><button class="btn-sm btn-primary" id="btnCooc" onclick="App.computeCooc()" disabled>Compute Co-occurrence</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════════════
+const CONFIG = {
+  moranK: 5,
+  tileUrl: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+  tileAttr: '&copy; OSM &copy; CARTO',
+  defaultCenter: [15, 0],
+  defaultZoom: 2,
+  featureColors: [
+    '#2563eb','#e76f51','#2ea87e','#9366c9','#d4982a',
+    '#d4577a','#4a9ead','#8b6c42','#5b8c5a','#c44569',
+    '#3498db','#e74c3c','#27ae60','#8e44ad','#f39c12'
+  ],
+  customColors: ['#d4577a','#e67e22','#1abc9c','#e74c3c','#8e44ad','#2ecc71','#3498db','#f1c40f']
+};
+
+// ═══════════════════════════════════════════════════════════════
+// PREDEFINED REFUGIA REGIONS — per §3.2 v9
+// Boundary convention: south/west >=  north/east <  (half-open)
+// Isolated regions (Caucasus) and max-extent bounds use inclusive
+// ═══════════════════════════════════════════════════════════════
+const PREDEFINED_REGIONS = [
+  // ── PRIMARY REFUGIA ──
+  {
+    id: 'americas', name: 'Americas', group: 'Primary Refugia',
+    hex: '#3b7dd8', enabled: true,
+    test(lat, lon) {
+      const eastLim = lat >= 67 ? -10 : -32;
+      if (lon >= eastLim) return false;
+      if (lat > 60 && lon < -168) return false;          // Siberian excl → NE Asia
+      if (lon < -130 && lat >= 0 && lat < 25) return false; // N Polynesia
+      if (lon < -100 && lat < 0) return false;               // S Polynesia
+      return true;
+    },
+    polygons: [
+      [[-80,-100],[-80,-32],[0,-32],[0,-100]],
+      [[0,-130],[0,-32],[12.5,-32],[12.5,-130]],
+      [[12.5,-130],[12.5,-32],[25,-32],[25,-130]],
+      [[25,-180],[25,-32],[60,-32],[60,-180]],
+      [[60,-168],[60,-32],[67,-32],[67,-168]],
+      [[67,-168],[67,-10],[85,-10],[85,-168]]
+    ]
+  },
+  {
+    id: 'sahul', name: 'Sahul', group: 'Primary Refugia',
+    hex: '#2ea87e', enabled: true,
+    test(lat, lon) {
+      if (lat >= 3 || lon < 110) return false;
+      if (lat >= -11) return lon >= 125 && lon < 150;
+      if (lat >= -20) return lon < 150;
+      return lon < 155;
+    },
+    polygons: [
+      [[-11,125],[-11,150],[3,150],[3,125]],
+      [[-20,110],[-20,150],[-11,150],[-11,110]],
+      [[-80,110],[-80,155],[-20,155],[-20,110]]
+    ]
+  },
+  {
+    id: 'caucasus', name: 'Caucasus', group: 'Primary Refugia',
+    hex: '#d4982a', enabled: true,
+    test(lat, lon) { return lat >= 37 && lat < 45 && lon >= 37 && lon < 50; },
+    polygons: [[[37,37],[37,50],[45,50],[45,37]]]
+  },
+
+  // ── SUPPLEMENTAL: OCEANIA (merged Pacific Extensions + Sahul subregions) ──
+  {
+    id: 'micronesia', name: 'Micronesia', group: 'Supplemental: Oceania',
+    hex: '#2ea87e', enabled: false,
+    test(lat, lon) { return lat >= 3 && lat < 20 && lon >= 130 && lon <= 180; },
+    polygons: [[[3,130],[3,180],[20,180],[20,130]]]
+  },
+  {
+    id: 'remote_melanesia', name: 'Remote Melanesia & SW Polynesia', group: 'Supplemental: Oceania',
+    hex: '#2ea87e', enabled: false,
+    test(lat, lon) {
+      if (lat >= 3) return false;
+      if (lat >= -20) return lon >= 150 && lon <= 180;
+      return lon >= 155 && lon <= 180;
+    },
+    polygons: [[[-20,150],[-20,180],[3,180],[3,150]],[[-80,155],[-80,180],[-20,180],[-20,155]]]
+  },
+  {
+    id: 'n_polynesia', name: 'N. Polynesia', group: 'Supplemental: Oceania',
+    hex: '#2ea87e', enabled: false,
+    test(lat, lon) { return lat >= 0 && lat < 25 && lon < -130; },
+    polygons: [[[0,-180],[0,-130],[25,-130],[25,-180]]]
+  },
+  {
+    id: 's_polynesia', name: 'S. Polynesia', group: 'Supplemental: Oceania',
+    hex: '#2ea87e', enabled: false,
+    test(lat, lon) { return lat < 0 && lon < -100; },
+    polygons: [[[-80,-180],[-80,-100],[0,-100],[0,-180]]]
+  },
+  {
+    id:'australia', name:'Australia', group:'Supplemental: Oceania',
+    hex:'#2ea87e', enabled:false,
+    test(lat, lon) {
+      if (lat >= -11 || lon < 110) return false;
+      if (lat >= -20) return lon < 150;
+      return lon < 155;
+    },
+    polygons:[[[-20,110],[-20,150],[-11,150],[-11,110]],[[-80,110],[-80,155],[-20,155],[-20,110]]]
+  },
+  {
+    id:'core_melanesia', name:'Core Melanesia', group:'Supplemental: Oceania',
+    hex:'#2ea87e', enabled:false,
+    test(lat, lon) { return lat >= -11 && lat < 3 && lon >= 125 && lon < 150; },
+    polygons:[[[-11,125],[-11,150],[3,150],[3,125]]]
+  },
+  {
+    id:'wallacea', name:'Wallacea & SE Sundaland', group:'Supplemental: Oceania',
+    hex:'#2ea87e', enabled:false,
+    // Between Australia (110°E) and Core Melanesia (125°E), from -11 to 3
+    test(lat, lon) { return lat >= -11 && lat < 3 && lon >= 110 && lon < 125; },
+    polygons:[[[-11,110],[-11,125],[3,125],[3,110]]]
+  },
+
+  // ── SUPPLEMENTAL: AMERICAS ──
+  {
+    id:'south_america', name:'South America', group:'Supplemental: Americas',
+    hex:'#3b7dd8', enabled:false,
+    test(lat, lon) {
+      if (lon >= -32) return false;
+      if (lat < 0) return lon >= -100;
+      if (lat < 7) return lon >= -130;
+      if (lat < 12.5) return lon >= -77.5;
+      return false;
+    },
+    polygons:[[[-80,-100],[-80,-32],[0,-32],[0,-100]],[[0,-130],[0,-32],[7,-32],[7,-130]],[[7,-77.5],[7,-32],[12.5,-32],[12.5,-77.5]]]
+  },
+  {
+    id:'nw_south_america', name:'NW South America', group:'Supplemental: Americas',
+    hex:'#3b7dd8', enabled:false,
+    test(lat, lon) {
+      if (lat < -15 || lon >= -65) return false;
+      if (lat < 0) return lon >= -100;
+      if (lat < 7) return lon >= -130;
+      if (lat < 12.5) return lon >= -77.5;
+      return false;
+    },
+    polygons:[[[-15,-100],[-15,-65],[0,-65],[0,-100]],[[0,-130],[0,-65],[7,-65],[7,-130]],[[7,-77.5],[7,-65],[12.5,-65],[12.5,-77.5]]]
+  },
+  {
+    id:'ne_south_america', name:'NE South America', group:'Supplemental: Americas',
+    hex:'#3b7dd8', enabled:false,
+    test(lat, lon) {
+      if (lon < -65 || lon >= -32) return false;
+      if (lat < -15) return false;
+      if (lat < 0) return true;
+      if (lat < 7) return true;
+      if (lat < 12.5) return lon >= -65;
+      return false;
+    },
+    polygons:[[[-15,-65],[-15,-32],[0,-32],[0,-65]],[[0,-65],[0,-32],[7,-32],[7,-65]],[[7,-65],[7,-32],[12.5,-32],[12.5,-65]]]
+  },
+  {
+    id:'sw_south_america', name:'SW South America', group:'Supplemental: Americas',
+    hex:'#3b7dd8', enabled:false,
+    test(lat, lon) { return lat < -15 && lon >= -100 && lon < -65; },
+    polygons:[[[-80,-100],[-80,-65],[-15,-65],[-15,-100]]]
+  },
+  {
+    id:'se_south_america', name:'SE South America', group:'Supplemental: Americas',
+    hex:'#3b7dd8', enabled:false,
+    test(lat, lon) { return lat < -15 && lon >= -65 && lon < -32; },
+    polygons:[[[-80,-65],[-80,-32],[-15,-32],[-15,-65]]]
+  },
+  {
+    id:'nw_namerica', name:'NW North America', group:'Supplemental: Americas',
+    hex:'#3b7dd8', enabled:false,
+    // Two polygons: 40–60°N (-180 to -100) + 60–85°N (-168 to -100, Siberian excl)
+    test(lat, lon) {
+      if (lon >= -100) return false;
+      if (lat >= 60) return lat < 85 && lon >= -168;
+      return lat >= 40;
+    },
+    polygons:[[[40,-180],[40,-100],[60,-100],[60,-180]],[[60,-168],[60,-100],[85,-100],[85,-168]]]
+  },
+  {
+    id:'ne_namerica', name:'NE North America', group:'Supplemental: Americas',
+    hex:'#3b7dd8', enabled:false,
+    // Variable eastern edge: -32 from 40-67°N, -10 from 67-85°N
+    test(lat, lon) {
+      if (lon < -100) return false;
+      if (lat >= 67) return lat < 85 && lon < -10;
+      return lat >= 40 && lon < -32;
+    },
+    polygons:[[[40,-100],[40,-32],[67,-32],[67,-10],[85,-10],[85,-100]]]
+  },
+  {
+    id:'sw_namerica', name:'SW North America', group:'Supplemental: Americas',
+    hex:'#3b7dd8', enabled:false,
+    test(lat, lon) { return lat >= 25 && lat < 40 && lon >= -180 && lon < -100; },
+    polygons:[[[25,-180],[25,-100],[40,-100],[40,-180]]]
+  },
+  {
+    id:'se_namerica', name:'SE North America', group:'Supplemental: Americas',
+    hex:'#3b7dd8', enabled:false,
+    test(lat, lon) { return lat >= 25 && lat < 40 && lon >= -100 && lon < -32; },
+    polygons:[[[25,-100],[25,-32],[40,-32],[40,-100]]]
+  },
+  {
+    id:'central_america', name:'Central America', group:'Supplemental: Americas',
+    hex:'#3b7dd8', enabled:false,
+    // Western boundary = N Polynesia eastern edge (-130°)
+    test(lat, lon) { return lat >= 7 && lat < 25 && lon >= -130 && lon < -77.5; },
+    polygons:[[[7,-130],[7,-77.5],[25,-77.5],[25,-130]]]
+  },
+  {
+    id:'antilles', name:'Antilles', group:'Supplemental: Americas',
+    hex:'#3b7dd8', enabled:false,
+    test(lat, lon) { return lat >= 12.5 && lat < 25 && lon >= -77.5 && lon < -32; },
+    polygons:[[[12.5,-77.5],[12.5,-32],[25,-32],[25,-77.5]]]
+  },
+
+  // ── SUPPLEMENTAL: WESTERN AFRO-EURASIA (Africa + Europe) ──
+  {
+    id:'sahara', name:'Sahara', group:'Supplemental: Western Afro-Eurasia',
+    hex:'#c44444', enabled:false,
+    test(lat, lon) { return lat >= 15 && lat < 30 && lon >= -32 && lon < 30; },
+    polygons:[[[15,-32],[15,30],[30,30],[30,-32]]]
+  },
+  {
+    id:'mediterranean', name:'Mediterranean', group:'Supplemental: Western Afro-Eurasia',
+    hex:'#c44444', enabled:false,
+    // 30–37°N: to 30°E; 37–45°N: extends to 37°E (Turkey/Black Sea gap)
+    test(lat, lon) {
+      if (lat < 30 || lat >= 45 || lon < -32) return false;
+      return lon < (lat >= 37 ? 37 : 30);
+    },
+    polygons:[[[30,-32],[30,30],[37,30],[37,-32]],[[37,-32],[37,37],[45,37],[45,-32]]]
+  },
+  {
+    id:'nw_europe', name:'NW Europe', group:'Supplemental: Western Afro-Eurasia',
+    hex:'#c44444', enabled:false,
+    // Western boundary meets Americas: -32 from 45-67°N, -10 from 67°N+
+    test(lat, lon) {
+      if (lon >= 10) return false;
+      if (lat >= 67) return lon >= -10;
+      return lat >= 45 && lon >= -32;
+    },
+    polygons:[[[45,-32],[45,10],[67,10],[67,-32]],[[67,-10],[67,10],[90,10],[90,-10]]]
+  },
+  {
+    id:'ne_europe_nw_asia', name:'NE Europe & NW Asia', group:'Supplemental: Western Afro-Eurasia',
+    hex:'#c44444', enabled:false,
+    test(lat, lon) { return lat >= 45 && lon >= 10 && lon < 50; },
+    polygons:[[[45,10],[45,50],[90,50],[90,10]]]
+  },
+  {
+    id:'west_africa', name:'West Africa', group:'Supplemental: Western Afro-Eurasia',
+    hex:'#c44444', enabled:false,
+    test(lat, lon) { return lat >= 0 && lat < 15 && lon >= -32 && lon < 15; },
+    polygons:[[[0,-32],[0,15],[15,15],[15,-32]]]
+  },
+  {
+    id:'central_africa', name:'Central Africa', group:'Supplemental: Western Afro-Eurasia',
+    hex:'#c44444', enabled:false,
+    // 0–15°N: 15–30°E; -15–0°N: -32–30°E
+    test(lat, lon) {
+      if (lat >= 0 && lat < 15 && lon >= 15 && lon < 30) return true;
+      if (lat >= -15 && lat < 0 && lon >= -32 && lon < 30) return true;
+      return false;
+    },
+    polygons:[[[0,15],[0,30],[15,30],[15,15]],[[-15,-32],[-15,30],[0,30],[0,-32]]]
+  },
+  {
+    id:'south_africa', name:'South Africa', group:'Supplemental: Western Afro-Eurasia',
+    hex:'#c44444', enabled:false,
+    test(lat, lon) { return lat < -15 && lon >= -32 && lon < 41; },
+    polygons:[[[-80,-32],[-80,41],[-15,41],[-15,-32]]]
+  },
+  {
+    id:'rift_valley', name:'Rift Valley & Great Lakes', group:'Supplemental: Western Afro-Eurasia',
+    hex:'#c44444', enabled:false,
+    test(lat, lon) { return lat >= -15 && lat < 12.5 && lon >= 30 && lon < 37; },
+    polygons:[[[-15,30],[-15,37],[12.5,37],[12.5,30]]]
+  },
+  {
+    id:'east_africa', name:'East Africa', group:'Supplemental: Western Afro-Eurasia',
+    hex:'#c44444', enabled:false,
+    // Above -15: 37–60°E; Below -15: 41–60°E (east of S Africa)
+    test(lat, lon) {
+      if (lat >= -15) return lat < 12.5 && lon >= 37 && lon < 60;
+      return lon >= 41 && lon < 60;
+    },
+    polygons:[[[-15,37],[-15,60],[12.5,60],[12.5,37]],[[-80,41],[-80,60],[-15,60],[-15,41]]]
+  },
+
+  // ── SUPPLEMENTAL: EASTERN AFRO-EURASIA (merged Caucasus + Asia) ──
+  {
+    id:'caucasus_nw', name:'NW Caucasus', group:'Supplemental: Eastern Afro-Eurasia',
+    hex:'#d4982a', enabled:false,
+    test(lat, lon) { return lat >= 42.5 && lat < 45 && lon >= 37 && lon < 44.5; },
+    polygons:[[[42.5,37],[42.5,44.5],[45,44.5],[45,37]]]
+  },
+  {
+    id:'caucasus_ne', name:'NE Caucasus', group:'Supplemental: Eastern Afro-Eurasia',
+    hex:'#d4982a', enabled:false,
+    test(lat, lon) { return lat >= 42.5 && lat < 45 && lon >= 44.5 && lon < 50; },
+    polygons:[[[42.5,44.5],[42.5,50],[45,50],[45,44.5]]]
+  },
+  {
+    id:'caucasus_sw', name:'SW Caucasus', group:'Supplemental: Eastern Afro-Eurasia',
+    hex:'#d4982a', enabled:false,
+    test(lat, lon) { return lat >= 37 && lat < 42.5 && lon >= 37 && lon < 44.5; },
+    polygons:[[[37,37],[37,44.5],[42.5,44.5],[42.5,37]]]
+  },
+  {
+    id:'caucasus_se', name:'SE Caucasus', group:'Supplemental: Eastern Afro-Eurasia',
+    hex:'#d4982a', enabled:false,
+    test(lat, lon) { return lat >= 37 && lat < 42.5 && lon >= 44.5 && lon < 50; },
+    polygons:[[[37,44.5],[37,50],[42.5,50],[42.5,44.5]]]
+  },
+  {
+    id:'levant', name:'Levant & Red Sea', group:'Supplemental: Western Afro-Eurasia',
+    hex:'#c44444', enabled:false,
+    test(lat, lon) { return lat >= 12.5 && lat < 37 && lon >= 30 && lon < 45; },
+    polygons:[[[12.5,30],[12.5,45],[37,45],[37,30]]]
+  },
+  {
+    id:'aden_persian', name:'Aden & Persian Gulfs', group:'Supplemental: Eastern Afro-Eurasia',
+    hex:'#d4982a', enabled:false,
+    test(lat, lon) { return lat >= 12.5 && lat < 37 && lon >= 45 && lon < 60; },
+    polygons:[[[12.5,45],[12.5,60],[37,60],[37,45]]]
+  },
+  {
+    id:'south_asia', name:'South Asia', group:'Supplemental: Eastern Afro-Eurasia',
+    hex:'#d4982a', enabled:false,
+    test(lat, lon) { return lat < 37 && lon >= 60 && lon < 90; },
+    polygons:[[[-80,60],[-80,90],[37,90],[37,60]]]
+  },
+  {
+    id:'se_asia', name:'SE Asia', group:'Supplemental: Eastern Afro-Eurasia',
+    hex:'#d4982a', enabled:false,
+    // 90–110°E, from -80 (catch-all) to 37°N (matching S Asia)
+    test(lat, lon) { return lat < 37 && lon >= 90 && lon < 110; },
+    polygons:[[[-80,90],[-80,110],[37,110],[37,90]]]
+  },
+  {
+    id:'phil_china_seas', name:'Philippine & China Seas', group:'Supplemental: Eastern Afro-Eurasia',
+    hex:'#d4982a', enabled:false,
+    // 110–130°E, 3°N (Wallacea top) to 37°N (matching SE Asia)
+    test(lat, lon) { return lat >= 3 && lat < 37 && lon >= 110 && lon < 130; },
+    polygons:[[[3,110],[3,130],[37,130],[37,110]]]
+  },
+  {
+    id:'north_central_asia', name:'North & Central Asia', group:'Supplemental: Eastern Afro-Eurasia',
+    hex:'#d4982a', enabled:false,
+    // Simple rectangle: 37–85°N, 50–130°E
+    test(lat, lon) { return lat >= 37 && lat < 85 && lon >= 50 && lon < 130; },
+    polygons:[[[37,50],[37,130],[85,130],[85,50]]]
+  },
+  {
+    id:'ne_asia', name:'NE Asia', group:'Supplemental: Eastern Afro-Eurasia',
+    hex:'#d4982a', enabled:false,
+    // 130–180°E, 20–85°N + Siberian extension (-180 to -168, 60-85°N)
+    test(lat, lon) {
+      if (lat >= 20 && lat < 85 && lon >= 130 && lon <= 180) return true;
+      if (lat >= 60 && lat < 85 && lon >= -180 && lon < -168) return true;
+      return false;
+    },
+    polygons:[[[20,130],[20,180],[85,180],[85,130]],[[60,-180],[60,-168],[85,-168],[85,-180]]]
+  }
+];
+
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+const State = {
+  loadedChapters: {},
+  currentChapter: null,
+  regions: PREDEFINED_REGIONS.map(r => ({...r})),
+  customRegions: [],
+  customColorIdx: 0,
+  map: null,
+  markers: null,
+  regionLayers: {},
+  drawnItems: null,
+  legend: null,
+  coocSelected: new Set(),
+  snapshots: [],
+  hiddenValues: new Set(),  // feature values hidden via legend checkboxes
+  compositeRows: [],       // [{name, codes: Set}] user-defined composite feature groups
+};
+
+// ═══════════════════════════════════════════════════════════════
+// STATS
+// ═══════════════════════════════════════════════════════════════
+const Stats = {
+  normalCDF(x) {
+    const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+    const sign=x<0?-1:1; x=Math.abs(x)/Math.sqrt(2);
+    const t=1/(1+p*x);
+    return 0.5*(1+sign*(1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x)));
+  },
+  haversine(lat1,lon1,lat2,lon2) {
+    const R=6371,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180;
+    const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+    return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+  },
+  pointInPolygon(lat, lon, polygon) {
+    let inside = false;
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+      const yi = polygon[i][0], xi = polygon[i][1];
+      const yj = polygon[j][0], xj = polygon[j][1];
+      if (((yi > lat) !== (yj > lat)) && (lon < (xj - xi) * (lat - yi) / (yj - yi) + xi)) {
+        inside = !inside;
+      }
+    }
+    return inside;
+  },
+  isInAnyRefugia(lang) {
+    for (const r of State.regions) {
+      if (r.enabled && r.test(lang.lat, lang.lon)) return true;
+    }
+    for (const cr of State.customRegions) {
+      if (cr.enabled && cr.test(lang.lat, lang.lon)) return true;
+    }
+    return false;
+  },
+  computeEnrichment(languages) {
+    const total = languages.length;
+    if (!total) return {baseline:0,byValue:{},regionBreakdown:{}};
+    const allRegions = [...State.regions, ...State.customRegions].filter(r => r.enabled);
+    const inRef = languages.filter(l => Stats.isInAnyRefugia(l)).length;
+    const baseline = inRef / total;
+    const groups = {};
+    languages.forEach(l => {
+      if (!groups[l.value]) groups[l.value] = {label:l.valueLabel, total:0, inRef:0, byRegion:{}};
+      groups[l.value].total++;
+      if (Stats.isInAnyRefugia(l)) groups[l.value].inRef++;
+      // Per-region breakdown
+      for (const r of allRegions) {
+        if (!groups[l.value].byRegion[r.id]) groups[l.value].byRegion[r.id] = {name:r.name, count:0};
+        if (r.test(l.lat, l.lon)) groups[l.value].byRegion[r.id].count++;
+      }
+    });
+    // Also compute baseline per-region
+    const baselineByRegion = {};
+    for (const r of allRegions) {
+      baselineByRegion[r.id] = {name:r.name, count: languages.filter(l => r.test(l.lat, l.lon)).length};
+    }
+    const byValue = {};
+    for (const [val,g] of Object.entries(groups)) {
+      const pct = g.total > 0 ? g.inRef / g.total : 0;
+      byValue[val] = {label:g.label, total:g.total, inRefugia:g.inRef, pct, enrichment: baseline > 0 ? pct / baseline : 0, byRegion:g.byRegion};
+    }
+    return {baseline, totalInRefugia:inRef, total, byValue, baselineByRegion, enabledRegions:allRegions.map(r=>({id:r.id,name:r.name}))};
+  },
+  computeCompositeRow(languages, codes, baseline) {
+    const matching = languages.filter(l => codes.has(l.value));
+    const inRef = matching.filter(l => Stats.isInAnyRefugia(l)).length;
+    const pct = matching.length > 0 ? inRef / matching.length : 0;
+    const allRegions = [...State.regions, ...State.customRegions].filter(r => r.enabled);
+    const byRegion = {};
+    for (const r of allRegions) {
+      byRegion[r.id] = {name:r.name, count: matching.filter(l => r.test(l.lat, l.lon)).length};
+    }
+    return {total:matching.length, inRefugia:inRef, pct, enrichment: baseline > 0 ? pct / baseline : 0, byRegion};
+  },
+  computeMoranI(languages, featureValue, k=5) {
+    const n = languages.length;
+    if (n < k + 1) return {I:NaN, z:NaN, p:NaN};
+    const x = languages.map(l => l.value === featureValue ? 1 : 0);
+    const xMean = x.reduce((a,b) => a+b, 0) / n;
+    if (xMean === 0 || xMean === 1) return {I:0, z:0, p:1};
+    // Distance matrix
+    const dists = [];
+    for (let i = 0; i < n; i++) {
+      dists[i] = [];
+      for (let j = 0; j < n; j++) {
+        dists[i][j] = i === j ? Infinity : Stats.haversine(languages[i].lat, languages[i].lon, languages[j].lat, languages[j].lon);
+      }
+    }
+    // KNN weight matrix (row-standardized)
+    const w = Array.from({length:n}, () => new Float64Array(n));
+    let W = 0;
+    for (let i = 0; i < n; i++) {
+      const sorted = dists[i].map((d,j) => ({j,d})).sort((a,b) => a.d - b.d).slice(0, k);
+      let rs = 0;
+      sorted.forEach(nb => { rs += 1/nb.d; });
+      sorted.forEach(nb => { const wij = (1/nb.d)/rs; w[i][nb.j] = wij; W += wij; });
+    }
+    let num = 0, den = 0;
+    for (let i = 0; i < n; i++) {
+      den += (x[i] - xMean) ** 2;
+      for (let j = 0; j < n; j++) if (w[i][j] > 0) num += w[i][j] * (x[i] - xMean) * (x[j] - xMean);
+    }
+    const I = den === 0 ? 0 : (n / W) * (num / den);
+    const EI = -1 / (n - 1);
+    let S1 = 0;
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) S1 += (w[i][j] + w[j][i]) ** 2;
+    S1 /= 2;
+    let S2 = 0;
+    for (let i = 0; i < n; i++) { let ri = 0, ci = 0; for (let j = 0; j < n; j++) { ri += w[i][j]; ci += w[j][i]; } S2 += (ri + ci) ** 2; }
+    const varI = (n * ((n*n - 3*n + 3)*S1 - n*S2 + 3*W*W) - (n*n - n) * (2*n*S1 - n*S2 + 6*W*W)) / ((n-1)*(n-2)*(n-3)*W*W) - EI*EI;
+    const z = varI > 0 ? (I - EI) / Math.sqrt(varI) : 0;
+    return {I: Math.round(I*1000)/1000, z: Math.round(z*100)/100, p: 2*(1-Stats.normalCDF(Math.abs(z)))};
+  },
+  computePhyloControl(languages, featureValue) {
+    const families = {};
+    languages.forEach(l => {
+      const f = l.family || 'Isolate/Unknown';
+      if (!families[f]) families[f] = {total:0, inRef:0, hasFeature:false};
+      families[f].total++;
+      if (Stats.isInAnyRefugia(l)) families[f].inRef++;
+      if (l.value === featureValue) families[f].hasFeature = true;
+    });
+    const allF = Object.entries(families), totalF = allF.length;
+    const featF = allF.filter(([_,f]) => f.hasFeature);
+    const thresholds = [
+      {name:'Any (≥1)', test:f => f.inRef >= 1},
+      {name:'Majority (>50%)', test:f => f.inRef / f.total > 0.5},
+      {name:'Strong (≥75%)', test:f => f.inRef / f.total >= 0.75},
+      {name:'Endemic (100%)', test:f => f.inRef === f.total},
+    ];
+    return thresholds.map(th => {
+      const bc = allF.filter(([_,f]) => th.test(f)).length, bp = bc / totalF;
+      const fc = featF.filter(([_,f]) => th.test(f)).length, fp = featF.length > 0 ? fc / featF.length : 0;
+      const enr = bp > 0 ? fp / bp : 0, n = featF.length, p = bp;
+      if (!n || !p || p === 1) return {name:th.name, baselinePct:bp, featurePct:fp, featureCount:fc, featureTotal:n, enrichment:enr, pValue:1};
+      const mean = n * p, std = Math.sqrt(n * p * (1-p)), z = std > 0 ? (fc - 0.5 - mean) / std : 0;
+      return {name:th.name, baselinePct:bp, featurePct:fp, featureCount:fc, featureTotal:n, enrichment:enr, pValue: 1 - Stats.normalCDF(z)};
+    });
+  },
+  chiSquare(a,b,c,d) {
+    const n = a+b+c+d;
+    if (!n || !(a+b) || !(c+d) || !(a+c) || !(b+d)) return {chi2:0, p:1};
+    const chi2 = n * ((a*d - b*c)**2) / ((a+b)*(c+d)*(a+c)*(b+d));
+    return {chi2: Math.round(chi2*100)/100, p: 2*(1-Stats.normalCDF(Math.sqrt(chi2)))};
+  },
+  computeCooccurrence(chapters) {
+    const ids = Object.keys(chapters);
+    if (ids.length < 2) return [];
+    const ls = {};
+    ids.forEach(cid => { ls[cid] = {}; chapters[cid].languages.forEach(l => { ls[cid][l.id] = l; }); });
+    let common = new Set(Object.keys(ls[ids[0]]));
+    for (let i = 1; i < ids.length; i++) common = new Set([...common].filter(x => ls[ids[i]][x]));
+    const results = [];
+    for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) {
+      const c1 = ids[i], c2 = ids[j];
+      for (const v1 of Object.keys(chapters[c1].codes)) for (const v2 of Object.keys(chapters[c2].codes)) {
+        let a=0,b=0,c=0,d=0;
+        for (const lid of common) { const l1=ls[c1][lid],l2=ls[c2][lid]; if(!l1||!l2)continue; const h1=l1.value===v1,h2=l2.value===v2; if(h1&&h2)a++;else if(h1)b++;else if(h2)c++;else d++; }
+        if (!a) continue;
+        const total=a+b+c+d, exp=(a+b)*(a+c)/total;
+        const {chi2,p} = Stats.chiSquare(a,b,c,d);
+        const combo = [...common].filter(lid => { const l1=ls[c1][lid],l2=ls[c2][lid]; return l1&&l2&&l1.value===v1&&l2.value===v2; }).map(lid => ls[c1][lid]);
+        const comboInRef = combo.filter(l => Stats.isInAnyRefugia(l)).length;
+        results.push({chapter1:c1,chapter2:c2,value1:v1,value2:v2,label1:chapters[c1].codes[v1]||v1,label2:chapters[c2].codes[v2]||v2,observed:a,expected:Math.round(exp*10)/10,chi2,p,comboN:combo.length,comboInRef,comboPct:combo.length>0?comboInRef/combo.length:0,commonTotal:total});
+      }
+    }
+    return results.sort((a,b) => a.p - b.p);
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════
+// DATA PARSING
+// ═══════════════════════════════════════════════════════════════
+const DataManager = {
+  debugLines: [],
+  debug(msg) {
+    this.debugLines.push(msg);
+    const el = document.getElementById('debugLog');
+    if (el) { el.style.display = 'block'; el.textContent = this.debugLines.join('\n'); }
+    console.log('[Parse]', msg);
+  },
+
+  parseFile(text, filename) {
+    this.debugLines = [];
+    text = text.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    const lines = text.split('\n').filter(l => l.trim());
+    this.debug(`File: ${filename}, ${lines.length} lines`);
+    if (lines.length < 2) { UI.setStatus('❌ File has < 2 lines.'); return null; }
+
+    // ── Find header row ──
+    let headerIdx = 0;
+    const kwSets = ['latitude','longitude','lat','lon','name','value','wals','description'];
+    for (let i = 0; i < Math.min(lines.length, 30); i++) {
+      const lower = lines[i].toLowerCase();
+      const hits = kwSets.filter(kw => lower.includes(kw)).length;
+      if (hits >= 2) { headerIdx = i; this.debug(`Header at line ${i+1}`); break; }
+    }
+
+    const headerLine = lines[headerIdx];
+    const tabCount = (headerLine.match(/\t/g) || []).length;
+    const commaCount = (headerLine.match(/,/g) || []).length;
+    const delimiter = tabCount >= 2 ? '\t' : (commaCount >= 2 ? ',' : '\t');
+    this.debug(`Delimiter: ${delimiter === '\t' ? 'TAB' : 'COMMA'}`);
+
+    const dataText = lines.slice(headerIdx).join('\n');
+    const parsed = Papa.parse(dataText, {
+      header: true, skipEmptyLines: true, delimiter,
+      transformHeader: h => h.trim()
+    });
+    const rows = parsed.data;
+    const rawCols = parsed.meta.fields || [];
+    this.debug(`Columns: [${rawCols.join(', ')}]`);
+    this.debug(`${rows.length} data rows`);
+    if (!rows.length) { UI.setStatus('❌ No data rows.'); return null; }
+
+    // ── Column mapping with priority ──
+    // Exact match first (case-insensitive, ignoring spaces/underscores), then substring
+    const normalize = s => s.toLowerCase().replace(/[\s_]+/g, '');
+
+    const findColExact = (targets) => {
+      // targets: array of normalized strings to match exactly
+      return rawCols.find(c => targets.includes(normalize(c)));
+    };
+    const findColPartial = (targets) => {
+      return rawCols.find(c => { const cn = normalize(c); return targets.some(t => cn.includes(t)); });
+    };
+
+    // ID column: specifically "wals code" or "walscode"
+    const colId = findColExact(['walscode', 'wals code']) || findColExact(['isocode', 'iso', 'glottocode', 'id']);
+
+    // Name
+    const colName = findColExact(['name', 'languagename', 'language']) || findColPartial(['name']);
+
+    // Lat/Lon
+    const colLat = findColExact(['latitude', 'lat']) || findColPartial(['latitude', 'lat']);
+    const colLon = findColExact(['longitude', 'lon', 'lng']) || findColPartial(['longitude', 'lon', 'lng']);
+
+    // Value: the WALS numeric value code. Specifically "value" column.
+    const colValue = findColExact(['value']) || findColPartial(['value']);
+
+    // Description: the human-readable label for the value
+    const colDesc = findColExact(['description']) || findColPartial(['description']);
+
+    // Family / Genus
+    const colFamily = findColExact(['family']) || findColPartial(['family', 'classification']);
+    const colGenus = findColExact(['genus']) || findColPartial(['genus']);
+
+    this.debug(`Mapped → id:${colId}, name:${colName}, lat:${colLat}, lon:${colLon}, value:${colValue}, desc:${colDesc}, family:${colFamily}, genus:${colGenus}`);
+
+    if (!colLat || !colLon) { UI.setStatus(`❌ No lat/lon columns. Found: [${rawCols.join(', ')}]`); return null; }
+
+    // Need either value or description
+    const featureCol = colValue || colDesc;
+    const labelCol = colDesc || colValue;  // prefer description as label
+    if (!featureCol) { UI.setStatus(`❌ No value/feature column. Found: [${rawCols.join(', ')}]`); return null; }
+
+    this.debug(`Feature col: "${featureCol}", Label col: "${labelCol}"`);
+
+    // ── Build languages ──
+    const codes = {};
+    const codeOrder = [];
+    const languages = [];
+    const seenIds = new Set();
+    let skipped = 0;
+
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      const lat = parseFloat(r[colLat]);
+      const lon = parseFloat(r[colLon]);
+      if (isNaN(lat) || isNaN(lon)) { skipped++; continue; }
+
+      const val = (r[featureCol] || '').trim();
+      if (!val) { skipped++; continue; }
+
+      // Use description as display label if available, otherwise the value itself
+      const label = labelCol && r[labelCol] ? r[labelCol].trim() : val;
+
+      const id = (colId && r[colId] ? r[colId].trim() : '') || `lang_${i}`;
+      if (seenIds.has(id)) { skipped++; continue; }
+      seenIds.add(id);
+
+      if (!codes[val]) { codes[val] = label; codeOrder.push(val); }
+
+      languages.push({
+        id,
+        name: (colName && r[colName] ? r[colName].trim() : '') || id,
+        lat, lon,
+        family: (colFamily && r[colFamily] ? r[colFamily].trim() : '') || 'Unknown',
+        genus: (colGenus && r[colGenus] ? r[colGenus].trim() : '') || '',
+        value: val,
+        valueLabel: label
+      });
+    }
+
+    this.debug(`Result: ${languages.length} languages, ${codeOrder.length} values, ${skipped} skipped`);
+    if (!languages.length) { UI.setStatus(`❌ No valid rows (${skipped} skipped). Check format.`); return null; }
+
+    // Sort by numeric WALS value code (1, 2, 3...) when possible
+    codeOrder.sort((a, b) => {
+      const na = parseFloat(a), nb = parseFloat(b);
+      if (!isNaN(na) && !isNaN(nb)) return na - nb;
+      return a.localeCompare(b);
+    });
+
+    const chapterId = filename.replace(/\.[^.]+$/, '').replace(/\s+/g, '_');
+    return {id: chapterId, name: chapterId, languages, codes, codeOrder};
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════
+// LEAFLET HELPERS
+// ═══════════════════════════════════════════════════════════════
+function extractLeafletLatLngs(layer) {
+  // Robustly extract an array of [lat, lng] pairs from any Leaflet shape.
+  // getLatLngs() can return nested arrays depending on shape type.
+  const raw = layer.getLatLngs();
+  return flattenToLatLngs(raw);
+}
+
+function flattenToLatLngs(arr) {
+  if (!Array.isArray(arr) || arr.length === 0) return [];
+  // If first element has .lat, we found LatLng objects
+  if (arr[0] && typeof arr[0].lat === 'number') {
+    return arr.map(ll => [ll.lat, ll.lng]);
+  }
+  // Otherwise recurse into first element (nested arrays)
+  return flattenToLatLngs(arr[0]);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MAP
+// ═══════════════════════════════════════════════════════════════
+const MapManager = {
+  init() {
+    State.map = L.map('map', {
+      center: CONFIG.defaultCenter, zoom: CONFIG.defaultZoom,
+      minZoom: 2, maxZoom: 12, worldCopyJump: true
+    });
+    L.tileLayer(CONFIG.tileUrl, {attribution: CONFIG.tileAttr, maxZoom: 19, subdomains: 'abcd'}).addTo(State.map);
+    State.markers = L.layerGroup().addTo(State.map);
+
+    // Draw control
+    State.drawnItems = L.featureGroup().addTo(State.map);
+    State.map.addControl(new L.Control.Draw({
+      draw: {
+        polygon: { allowIntersection: false, shapeOptions: {color: '#d4577a', fillOpacity: 0.15, weight: 2} },
+        rectangle: { shapeOptions: {color: '#d4577a', fillOpacity: 0.15, weight: 2} },
+        polyline: false, circle: false, marker: false, circlemarker: false
+      },
+      edit: { featureGroup: State.drawnItems }
+    }));
+
+    State.map.on(L.Draw.Event.CREATED, (e) => {
+      const layer = e.layer;
+      const hex = CONFIG.customColors[State.customColorIdx % CONFIG.customColors.length];
+      State.customColorIdx++;
+      layer.setStyle({color: hex, fillColor: hex, fillOpacity: 0.15, weight: 2});
+      State.drawnItems.addLayer(layer);
+
+      // ROBUST coordinate extraction
+      const latlngs = extractLeafletLatLngs(layer);
+      console.log('[CustomRegion] Extracted coords:', latlngs.length, 'points', latlngs);
+
+      if (latlngs.length < 3) {
+        console.warn('[CustomRegion] Too few points:', latlngs);
+        return;
+      }
+
+      const id = 'custom_' + Date.now();
+      const region = {
+        id,
+        name: `Custom ${State.customRegions.length + 1}`,
+        group: 'Custom Regions',
+        hex,
+        enabled: true,
+        latlngs,
+        test: (lat, lon) => Stats.pointInPolygon(lat, lon, latlngs),
+        layer
+      };
+      State.customRegions.push(region);
+      UI.renderRegionToggles();
+      const ch = State.loadedChapters[State.currentChapter];
+      if (ch) { MapManager.renderLanguages(ch); App.updateAnalysis(); }
+    });
+
+    State.map.on(L.Draw.Event.DELETED, (e) => {
+      e.layers.eachLayer(layer => {
+        State.customRegions = State.customRegions.filter(r => r.layer !== layer);
+      });
+      UI.renderRegionToggles();
+      const ch = State.loadedChapters[State.currentChapter];
+      if (ch) { MapManager.renderLanguages(ch); App.updateAnalysis(); }
+    });
+
+    // EDITED: update coordinates when custom polygons are moved/resized
+    State.map.on(L.Draw.Event.EDITED, (e) => {
+      e.layers.eachLayer(layer => {
+        const r = State.customRegions.find(c => c.layer === layer);
+        if (r) {
+          const ll = extractLeafletLatLngs(layer);
+          if (ll.length >= 3) {
+            r.latlngs = ll;
+            r.test = (lat, lon) => Stats.pointInPolygon(lat, lon, ll);
+          }
+        }
+      });
+      UI.renderRegionToggles();
+      const ch = State.loadedChapters[State.currentChapter];
+      if (ch) { MapManager.renderLanguages(ch); App.updateAnalysis(); }
+    });
+
+    // Render predefined region polygons as single multi-polygon layers
+    State.regions.forEach(r => {
+      const multiCoords = r.polygons.map(poly => [poly]);
+      const layer = L.polygon(multiCoords, {
+        color: r.hex, fillColor: r.hex,
+        fillOpacity: r.enabled ? 0.10 : 0.02,
+        weight: 0.8,
+        opacity: r.enabled ? 0.25 : 0.08,
+        dashArray: r.enabled ? null : '4 4'
+      }).addTo(State.map);
+      layer.bindTooltip(r.name, {sticky: true, className: 'region-tooltip'});
+      layer._regionId = r.id;
+      State.regionLayers[r.id] = layer;
+    });
+  },
+
+  updateRegionTooltips() {
+    const ch = State.loadedChapters[State.currentChapter];
+    State.regions.forEach(r => {
+      const layer = State.regionLayers[r.id];
+      if (!layer || !layer.setTooltipContent) return;
+      if (!ch) { layer.setTooltipContent(r.name); return; }
+      const inRegion = ch.languages.filter(lang => r.test(lang.lat, lang.lon));
+      let tip = `<strong>${r.name}</strong><br>${inRegion.length} language${inRegion.length !== 1 ? 's' : ''}`;
+      if (inRegion.length > 0) {
+        const valCounts = {};
+        inRegion.forEach(lang => {
+          if (lang.v == null) return;
+          const label = ch.codes[lang.v] || lang.v;
+          if (!label || label === 'undefined') return;
+          valCounts[label] = (valCounts[label] || 0) + 1;
+        });
+        const sorted = Object.entries(valCounts).sort((a,b) => b[1] - a[1]);
+        if (sorted.length > 0) {
+          tip += '<br>' + sorted.map(([label, count]) => `${label}: ${count}`).join('<br>');
+        }
+      }
+      layer.setTooltipContent(tip);
+    });
+  },
+
+  setRegionVisible(regionId, enabled) {
+    const layer = State.regionLayers[regionId];
+    if (layer && layer.setStyle) {
+      layer.setStyle({
+        fillOpacity: enabled ? 0.10 : 0.02,
+        weight: 0.8,
+        opacity: enabled ? 0.25 : 0.08,
+        dashArray: enabled ? null : '4 4'
+      });
+      return;
+    }
+    const custom = State.customRegions.find(r => r.id === regionId);
+    if (custom && custom.layer) {
+      custom.layer.setStyle({
+        color: custom.hex, fillColor: custom.hex,
+        fillOpacity: enabled ? 0.15 : 0.03,
+        weight: enabled ? 2 : 0.5,
+        opacity: enabled ? 0.8 : 0.15,
+        dashArray: enabled ? null : '4 4'
+      });
+    }
+  },
+
+  renderLanguages(chapter) {
+    State.markers.clearLayers();
+    if (!chapter) return;
+    const codeColors = {};
+    const keys = chapter.codeOrder.length ? chapter.codeOrder : Object.keys(chapter.codes);
+    keys.forEach((code,i) => { codeColors[code] = CONFIG.featureColors[i % CONFIG.featureColors.length]; });
+
+    chapter.languages.forEach(lang => {
+      if (State.hiddenValues.has(lang.value)) return; // Skip hidden values
+      const color = codeColors[lang.value] || '#888';
+      const inRef = Stats.isInAnyRefugia(lang);
+      const marker = L.circleMarker([lang.lat, lang.lon], {
+        radius: 4.5, fillColor: color,
+        color: inRef ? '#333' : '#aaa',
+        weight: inRef ? 1.2 : 0.6,
+        fillOpacity: 0.85
+      });
+      // Tooltip with source-labeled classification
+      const familyLine = lang.family && lang.family !== 'Unknown'
+        ? `<div class="tt-detail">Classification (source file): ${lang.family}${lang.genus ? ' › ' + lang.genus : ''}</div>`
+        : '';
+      marker.bindTooltip(`<div class="lang-tooltip">
+        <strong>${lang.name}</strong>
+        ${familyLine}
+        <div class="tt-value">${lang.valueLabel}</div>
+        <div class="tt-value">${inRef ? '● In refugia' : '○ Non-refugia'}</div>
+      </div>`, {direction:'top', offset:[0,-6]});
+      State.markers.addLayer(marker);
+    });
+    MapManager.updateLegend(chapter, codeColors);
+  },
+
+  updateLegend(chapter, codeColors) {
+    if (State.legend) State.map.removeControl(State.legend);
+    State.legend = L.control({position: 'bottomright'});
+    State.legend.onAdd = function() {
+      const div = L.DomUtil.create('div', 'map-legend');
+      div.innerHTML = `<div style="font-weight:600;margin-bottom:4px;font-size:12px">${chapter.name}</div>`;
+      const keys = chapter.codeOrder.length ? chapter.codeOrder : Object.keys(chapter.codes);
+      keys.forEach(code => {
+        const count = chapter.languages.filter(l => l.value === code).length;
+        const hidden = State.hiddenValues.has(code);
+        const item = document.createElement('label');
+        item.className = 'map-legend-item' + (hidden ? ' hidden' : '');
+        item.innerHTML = `<input type="checkbox" class="map-legend-cb" ${hidden ? '' : 'checked'}><span class="map-legend-dot" style="background:${codeColors[code]||'#888'}"></span>${chapter.codes[code]||code} (n=${count})`;
+        item.querySelector('input').addEventListener('change', (e) => {
+          if (e.target.checked) State.hiddenValues.delete(code); else State.hiddenValues.add(code);
+          item.classList.toggle('hidden', !e.target.checked);
+          MapManager.renderLanguages(chapter);
+          App.updateAnalysis();
+        });
+        div.appendChild(item);
+      });
+      // Prevent map interaction when clicking legend
+      L.DomEvent.disableClickPropagation(div);
+      return div;
+    };
+    State.legend.addTo(State.map);
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════
+// UI
+// ═══════════════════════════════════════════════════════════════
+const UI = {
+  setStatus(html) { document.getElementById('statusBar').innerHTML = html; },
+
+  toggleSection(name) {
+    const body = document.getElementById('body' + name.charAt(0).toUpperCase() + name.slice(1));
+    const arrow = document.getElementById('arrow' + name.charAt(0).toUpperCase() + name.slice(1));
+    if (!body) return;
+    body.classList.toggle('collapsed');
+    if (arrow) arrow.style.transform = body.classList.contains('collapsed') ? 'rotate(-90deg)' : '';
+  },
+
+  renderRegionToggles() {
+    const container = document.getElementById('regionToggles');
+    container.innerHTML = '';
+    const chapter = State.currentChapter ? State.loadedChapters[State.currentChapter] : null;
+    const groups = new Map();
+    [...State.regions, ...State.customRegions].forEach(r => {
+      const g = r.group || 'Other';
+      if (!groups.has(g)) groups.set(g, []);
+      groups.get(g).push(r);
+    });
+
+    // Track collapsed state across re-renders
+    if (!State._collapsedGroups) State._collapsedGroups = new Set();
+
+    for (const [groupName, regionList] of groups) {
+      const isSupp = groupName.startsWith('Supplemental:');
+      const shortName = isSupp ? groupName.replace('Supplemental: ', '') : groupName;
+      const groupKey = groupName.replace(/[^a-zA-Z]/g, '_');
+      const isCollapsed = isSupp && !State._collapsedGroups.has(groupKey + '_open');
+
+      if (isSupp) {
+        // Collapsible header
+        const header = document.createElement('div');
+        header.className = 'rg-header';
+
+        const arrow = document.createElement('span');
+        arrow.className = 'rg-arrow';
+        arrow.textContent = isCollapsed ? '▶' : '▼';
+
+        const title = document.createElement('span');
+        title.textContent = shortName;
+
+        const controls = document.createElement('span');
+        controls.className = 'rg-controls';
+
+        const allLink = document.createElement('a');
+        allLink.href = '#';
+        allLink.textContent = 'all';
+        allLink.onclick = (e) => {
+          e.preventDefault(); e.stopPropagation();
+          regionList.forEach(r => { r.enabled = true; MapManager.setRegionVisible(r.id, true); });
+          if (chapter) { MapManager.renderLanguages(chapter); App.updateAnalysis(); }
+          UI.renderRegionToggles();
+        };
+
+        const sep = document.createTextNode(' · ');
+
+        const noneLink = document.createElement('a');
+        noneLink.href = '#';
+        noneLink.textContent = 'none';
+        noneLink.onclick = (e) => {
+          e.preventDefault(); e.stopPropagation();
+          regionList.forEach(r => { r.enabled = false; MapManager.setRegionVisible(r.id, false); });
+          if (chapter) { MapManager.renderLanguages(chapter); App.updateAnalysis(); }
+          UI.renderRegionToggles();
+        };
+
+        controls.appendChild(allLink);
+        controls.appendChild(sep);
+        controls.appendChild(noneLink);
+
+        header.appendChild(arrow);
+        header.appendChild(title);
+        header.appendChild(controls);
+
+        const body = document.createElement('div');
+        body.className = 'rg-body' + (isCollapsed ? ' rg-collapsed' : '');
+
+        header.addEventListener('click', () => {
+          const nowOpen = body.classList.toggle('rg-collapsed');
+          arrow.textContent = nowOpen ? '▶' : '▼';
+          if (nowOpen) State._collapsedGroups.delete(groupKey + '_open');
+          else State._collapsedGroups.add(groupKey + '_open');
+        });
+
+        container.appendChild(header);
+        regionList.forEach(r => body.appendChild(UI._mkToggle(r, chapter)));
+        container.appendChild(body);
+      } else {
+        const label = document.createElement('div');
+        label.className = 'region-group-label';
+        label.textContent = groupName;
+        container.appendChild(label);
+        regionList.forEach(r => container.appendChild(UI._mkToggle(r, chapter)));
+      }
+    }
+  },
+
+  _mkToggle(r, chapter) {
+    const count = chapter ? chapter.languages.filter(l => r.test(l.lat, l.lon)).length : '—';
+    const isCustom = r.group === 'Custom Regions';
+    const div = document.createElement('div');
+    div.className = 'region-toggle';
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = r.enabled;
+    cb.addEventListener('change', () => {
+      r.enabled = cb.checked;
+      MapManager.setRegionVisible(r.id, r.enabled);
+      if (chapter) { MapManager.renderLanguages(chapter); App.updateAnalysis(); }
+    });
+
+    const swatch = document.createElement('span');
+    swatch.className = 'region-swatch';
+    swatch.style.background = r.hex;
+
+    const labelSpan = document.createElement('span');
+    labelSpan.className = 'region-label' + (isCustom ? ' editable' : '');
+    labelSpan.textContent = r.name;
+
+    if (isCustom) {
+      labelSpan.addEventListener('dblclick', () => {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'region-label-input';
+        input.value = r.name;
+        labelSpan.replaceWith(input);
+        input.focus(); input.select();
+        const finish = () => {
+          r.name = input.value.trim() || r.name;
+          input.replaceWith(labelSpan);
+          labelSpan.textContent = r.name;
+        };
+        input.addEventListener('blur', finish);
+        input.addEventListener('keydown', (e) => { if (e.key === 'Enter') finish(); if (e.key === 'Escape') { input.replaceWith(labelSpan); } });
+      });
+    }
+
+    const countSpan = document.createElement('span');
+    countSpan.className = 'region-count';
+    countSpan.textContent = count;
+
+    div.appendChild(cb);
+    div.appendChild(swatch);
+    div.appendChild(labelSpan);
+    div.appendChild(countSpan);
+    return div;
+  },
+
+  renderEnrichment(result, chapter) {
+    const el = document.getElementById('enrichmentResults');
+    if (!result || !chapter) { el.innerHTML = '<div class="empty-state"><p>Upload and select a chapter.</p></div>'; return; }
+    const bp = (result.baseline * 100).toFixed(1);
+    const hasRegions = result.enabledRegions && result.enabledRegions.length > 0;
+    const showBreakdown = hasRegions && document.getElementById('cbBreakdown')?.checked;
+
+    // Build header
+    let html = `<div class="enrichment-controls">
+      <label style="font-size:11px;display:flex;align-items:center;gap:4px;cursor:pointer">
+        <input type="checkbox" id="cbBreakdown" ${showBreakdown?'checked':''} onchange="App.updateAnalysis()" style="accent-color:var(--accent)"> Region breakdown
+      </label>
+    </div>`;
+    html += `<table class="stats-table">
+      <tr><th>Feature Value</th><th class="num">N</th><th class="num">Ref</th><th class="num">%</th><th class="num">E×</th>`;
+    if (showBreakdown) result.enabledRegions.forEach(r => {
+      const short = r.name.replace(/North America/g,'NA').replace(/South America/g,'SA').replace(/ \/ Ethiopian Highlands/g,'');
+      html += `<th class="num region-col" title="${r.name}">${short.length > 8 ? short.substring(0,7)+'…' : short}</th>`;
+    });
+    html += `<th class="num" style="width:20px"></th></tr>`;
+
+    // Baseline row
+    html += `<tr class="baseline"><td><em>Baseline</em></td><td class="num">${result.total}</td><td class="num">${result.totalInRefugia}</td><td class="num">${bp}%</td><td class="num">1.00×</td>`;
+    if (showBreakdown && result.baselineByRegion) result.enabledRegions.forEach(r => {
+      const rc = result.baselineByRegion[r.id];
+      html += `<td class="num region-col" title="${r.name}: ${rc?rc.count:0}/${result.total}">${rc?rc.count:0}</td>`;
+    });
+    html += `<td></td></tr>`;
+
+    // Feature value rows with checkboxes for composite
+    const keys = chapter.codeOrder.length ? chapter.codeOrder : Object.keys(result.byValue);
+    keys.forEach(code => {
+      const v = result.byValue[code]; if (!v) return;
+      const pct = (v.pct * 100).toFixed(1), enr = v.enrichment.toFixed(2);
+      const cls = v.enrichment > 1.1 ? 'enriched' : (v.enrichment < 0.9 ? 'depleted' : 'neutral-val');
+      html += `<tr><td><label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" class="composite-cb" data-code="${code}" style="accent-color:var(--accent);width:12px;height:12px">${v.label}</label></td><td class="num">${v.total}</td><td class="num">${v.inRefugia}</td><td class="num">${pct}%</td><td class="num ${cls}">${enr}×</td>`;
+      if (showBreakdown) result.enabledRegions.forEach(r => {
+        const rc = v.byRegion[r.id];
+        const cnt = rc ? rc.count : 0;
+        const pctOfVal = v.total > 0 ? ((cnt/v.total)*100).toFixed(0) : '0';
+        html += `<td class="num region-col" title="${r.name}: ${cnt}/${v.total} (${pctOfVal}%)">${cnt}</td>`;
+      });
+      html += `<td></td></tr>`;
+    });
+
+    // Composite rows
+    State.compositeRows.forEach((cr, idx) => {
+      const comp = Stats.computeCompositeRow(chapter.languages, cr.codes, result.baseline);
+      const pct = (comp.pct * 100).toFixed(1), enr = comp.enrichment.toFixed(2);
+      const cls = comp.enrichment > 1.1 ? 'enriched' : (comp.enrichment < 0.9 ? 'depleted' : 'neutral-val');
+      html += `<tr class="composite-row"><td title="${[...cr.codes].map(c => chapter.codes[c]||c).join(' + ')}"><em>${cr.name}</em></td><td class="num">${comp.total}</td><td class="num">${comp.inRefugia}</td><td class="num">${pct}%</td><td class="num ${cls}">${enr}×</td>`;
+      if (showBreakdown) result.enabledRegions.forEach(r => {
+        const rc = comp.byRegion[r.id];
+        html += `<td class="num region-col">${rc?rc.count:0}</td>`;
+      });
+      html += `<td><button class="btn-x" onclick="State.compositeRows.splice(${idx},1);App.updateAnalysis()" title="Remove">×</button></td></tr>`;
+    });
+
+    html += '</table>';
+    html += `<div class="composite-actions"><button class="btn-sm" onclick="App.addCompositeRow()">+ Combine checked values</button> <button class="btn-sm" onclick="App.copyEnrichmentTable()" title="Copy enrichment table as TSV">📋 Copy Table</button> <button class="btn-sm" onclick="App.exportAll()" title="Export all computed results">📋 Export All</button></div>`;
+    el.innerHTML = html;
+  },
+
+  renderMoran(results, chapter) {
+    const el = document.getElementById('moranResults');
+    let html = `<table class="stats-table"><tr><th>Feature Value</th><th class="num">I</th><th class="num">z</th><th class="num">p</th></tr>`;
+    const keys = chapter.codeOrder.length ? chapter.codeOrder : Object.keys(results);
+    keys.forEach(code => {
+      const r = results[code]; if (!r) return;
+      const pStr = isNaN(r.p) ? '—' : (r.p < 0.001 ? '<.001' : r.p.toFixed(4));
+      const sig = !isNaN(r.p) && r.p < 0.05 ? 'enriched' : 'neutral-val';
+      html += `<tr><td>${chapter.codes[code]||code}</td><td class="num">${isNaN(r.I)?'—':r.I.toFixed(3)}</td><td class="num">${isNaN(r.z)?'—':r.z.toFixed(2)}</td><td class="num ${sig}">${pStr}</td></tr>`;
+    });
+    el.innerHTML = html + '</table>';
+  },
+
+  renderPhylo(results, featureValue, chapter) {
+    const el = document.getElementById('phyloResults');
+    let html = `<div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Feature: <strong>${chapter.codes[featureValue]||featureValue}</strong> · ${results[0]?.featureTotal||0} families</div>`;
+    html += `<table class="stats-table"><tr><th>Threshold</th><th class="num">Base</th><th class="num">Feature</th><th class="num">E×</th><th class="num">p</th></tr>`;
+    results.forEach(r => {
+      const pStr = r.pValue < 0.0001 ? '<.0001' : r.pValue.toFixed(4);
+      const cls = r.enrichment > 1.1 && r.pValue < 0.05 ? 'enriched' : 'neutral-val';
+      html += `<tr><td>${r.name}</td><td class="num">${(r.baselinePct*100).toFixed(1)}%</td><td class="num">${(r.featurePct*100).toFixed(1)}% (${r.featureCount}/${r.featureTotal})</td><td class="num ${cls}">${r.enrichment.toFixed(2)}×</td><td class="num ${cls}">${pStr}</td></tr>`;
+    });
+    html += '</table>';
+    html += `<div style="margin-top:8px;font-size:11px;color:var(--text-muted)">Analyze: <select id="phyloValueSelect" onchange="App.computePhylo()" style="font-size:11px;font-family:var(--font-mono)">`;
+    (chapter.codeOrder.length ? chapter.codeOrder : Object.keys(chapter.codes)).forEach(code => {
+      html += `<option value="${code}" ${code===featureValue?'selected':''}>${chapter.codes[code]||code}</option>`;
+    });
+    el.innerHTML = html + '</select></div>';
+  },
+
+  renderCooc(results) {
+    const el = document.getElementById('coocResults');
+    if (!results || !results.length) { el.innerHTML = '<div class="empty-state"><p>Select ≥2 chapters.</p></div>'; return; }
+    const top = results.filter(r => r.comboN >= 2).slice(0, 30);
+    let html = `<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">${results.length} combos · top 30</div>`;
+    html += `<table class="stats-table"><tr><th>Combination</th><th class="num">N</th><th class="num">%Ref</th><th class="num">χ²</th><th class="num">p</th></tr>`;
+    top.forEach(r => {
+      const pStr = r.p < 0.001 ? '<.001' : r.p.toFixed(3);
+      const rp = (r.comboPct*100).toFixed(1);
+      const cls = r.comboPct > 0.6 ? 'enriched' : (r.comboPct < 0.4 ? 'depleted' : 'neutral-val');
+      html += `<tr><td style="font-size:10px">${r.label1}<br>+ ${r.label2}</td><td class="num">${r.comboN}</td><td class="num ${cls}">${rp}%</td><td class="num">${r.chi2}</td><td class="num">${pStr}</td></tr>`;
+    });
+    el.innerHTML = html + '</table>';
+  },
+
+  renderSensitivity() {
+    const el = document.getElementById('sensitivityResults');
+    if (!State.snapshots.length) { el.innerHTML = '<div class="empty-state"><p>Take snapshots with different region settings.</p></div>'; return; }
+    const firstSnap = State.snapshots[0];
+    const codes = Object.keys(firstSnap.enrichment.byValue);
+    let html = '<table class="stats-table"><tr><th>Config</th><th class="num">Base</th>';
+    codes.forEach(c => {
+      const lbl = firstSnap.enrichment.byValue[c].label;
+      html += `<th class="num" title="${lbl}">${lbl.length > 12 ? lbl.substring(0,12)+'…' : lbl}</th>`;
+    });
+    html += '</tr>';
+    State.snapshots.forEach(snap => {
+      html += `<tr><td style="font-size:10px" title="${snap.label}">${snap.label.length > 25 ? snap.label.substring(0,25)+'…' : snap.label}</td>`;
+      html += `<td class="num">${(snap.enrichment.baseline*100).toFixed(1)}%</td>`;
+      codes.forEach(c => {
+        const v = snap.enrichment.byValue[c];
+        if (v) {
+          const cls = v.enrichment > 1.1 ? 'enriched' : (v.enrichment < 0.9 ? 'depleted' : 'neutral-val');
+          html += `<td class="num ${cls}">${v.enrichment.toFixed(2)}×</td>`;
+        } else html += '<td class="num">—</td>';
+      });
+      html += '</tr>';
+    });
+    el.innerHTML = html + '</table>';
+  },
+
+  updateCoocChips() {
+    const container = document.getElementById('coocChapters');
+    container.innerHTML = '';
+    for (const [cid, ch] of Object.entries(State.loadedChapters)) {
+      const chip = document.createElement('span');
+      chip.className = 'cooc-chip' + (State.coocSelected.has(cid) ? ' active' : '');
+      chip.textContent = cid; chip.title = ch.name;
+      chip.onclick = () => {
+        if (State.coocSelected.has(cid)) State.coocSelected.delete(cid); else State.coocSelected.add(cid);
+        chip.classList.toggle('active');
+        document.getElementById('btnCooc').disabled = State.coocSelected.size < 2;
+      };
+      container.appendChild(chip);
+    }
+    document.getElementById('btnCooc').disabled = State.coocSelected.size < 2;
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════
+// APP
+// ═══════════════════════════════════════════════════════════════
+const App = {
+  init() { MapManager.init(); UI.renderRegionToggles(); },
+
+  handleUpload(event) {
+    const file = event.target.files[0]; if (!file) return;
+    UI.setStatus(`<span class="loading-spinner"></span> Reading ${file.name}...`);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const chapter = DataManager.parseFile(e.target.result, file.name);
+        if (!chapter) return;
+        State.loadedChapters[chapter.id] = chapter;
+        const select = document.getElementById('chapterSelect');
+        select.disabled = false;
+        let opt = select.querySelector(`option[value="${CSS.escape(chapter.id)}"]`);
+        if (!opt) {
+          opt = document.createElement('option');
+          opt.value = chapter.id;
+          opt.textContent = `${chapter.id} (${chapter.languages.length} langs, ${Object.keys(chapter.codes).length} vals)`;
+          select.appendChild(opt);
+        }
+        select.value = chapter.id;
+        App.selectChapter(chapter.id);
+        document.getElementById('dataStatus').textContent = `${Object.keys(State.loadedChapters).length} chapter(s)`;
+        UI.setStatus(`✓ ${chapter.id}: ${chapter.languages.length} languages, ${Object.keys(chapter.codes).length} feature values`);
+      } catch (err) { UI.setStatus('❌ Parse error: ' + err.message); console.error(err); }
+      event.target.value = '';
+    };
+    reader.onerror = () => UI.setStatus('❌ Error reading file.');
+    reader.readAsText(file);
+  },
+
+  selectChapter(chapterId) {
+    if (!chapterId) return;
+    const ch = State.loadedChapters[chapterId];
+    if (!ch) { UI.setStatus('❌ Not found: ' + chapterId); return; }
+    State.currentChapter = chapterId;
+    State.hiddenValues.clear();
+    State.compositeRows = [];
+    UI.setStatus(`${ch.name} · ${ch.languages.length} languages`);
+    MapManager.renderLanguages(ch);
+    UI.renderRegionToggles();
+    UI.updateCoocChips();
+    document.getElementById('btnMoran').disabled = false;
+    document.getElementById('btnPhylo').disabled = false;
+    document.getElementById('btnSnapshot').disabled = false;
+    App.updateAnalysis();
+  },
+
+  updateAnalysis() {
+    const ch = State.loadedChapters[State.currentChapter]; if (!ch) return;
+    UI.renderEnrichment(Stats.computeEnrichment(ch.languages), ch);
+    MapManager.updateRegionTooltips();
+  },
+
+  addCompositeRow() {
+    const cbs = document.querySelectorAll('.composite-cb:checked');
+    if (cbs.length < 2) { UI.setStatus('⚠ Check ≥2 feature values to combine.'); return; }
+    const codes = new Set();
+    cbs.forEach(cb => codes.add(cb.dataset.code));
+    const ch = State.loadedChapters[State.currentChapter]; if (!ch) return;
+    const labels = [...codes].map(c => ch.codes[c]||c);
+    const name = labels.map(l => l.length > 15 ? l.substring(0,14)+'…' : l).join(' + ');
+    State.compositeRows.push({name, codes});
+    App.updateAnalysis();
+  },
+
+  copyEnrichmentTable() {
+    const ch = State.loadedChapters[State.currentChapter]; if (!ch) return;
+    const result = Stats.computeEnrichment(ch.languages);
+    const allRegions = result.enabledRegions || [];
+    const showBrk = document.getElementById('cbBreakdown')?.checked;
+    let tsv = 'Feature Value\tN\tIn Refugia\t% Refugia\tEnrichment';
+    if (showBrk) allRegions.forEach(r => { tsv += '\t' + r.name; });
+    tsv += '\n';
+    // Baseline
+    tsv += `BASELINE\t${result.total}\t${result.totalInRefugia}\t${(result.baseline*100).toFixed(1)}%\t1.00×`;
+    if (showBrk && result.baselineByRegion) allRegions.forEach(r => { tsv += '\t' + (result.baselineByRegion[r.id]?.count||0); });
+    tsv += '\n';
+    // Values
+    const keys = ch.codeOrder.length ? ch.codeOrder : Object.keys(result.byValue);
+    keys.forEach(code => {
+      const v = result.byValue[code]; if (!v) return;
+      tsv += `${v.label}\t${v.total}\t${v.inRefugia}\t${(v.pct*100).toFixed(1)}%\t${v.enrichment.toFixed(2)}×`;
+      if (showBrk) allRegions.forEach(r => { tsv += '\t' + (v.byRegion[r.id]?.count||0); });
+      tsv += '\n';
+    });
+    // Composites
+    State.compositeRows.forEach(cr => {
+      const comp = Stats.computeCompositeRow(ch.languages, cr.codes, result.baseline);
+      tsv += `[${cr.name}]\t${comp.total}\t${comp.inRefugia}\t${(comp.pct*100).toFixed(1)}%\t${comp.enrichment.toFixed(2)}×`;
+      if (showBrk) allRegions.forEach(r => { tsv += '\t' + (comp.byRegion[r.id]?.count||0); });
+      tsv += '\n';
+    });
+    navigator.clipboard.writeText(tsv).then(() => UI.setStatus('📋 Enrichment table copied')).catch(() => UI.setStatus('⚠ Copy failed'));
+  },
+
+  exportAll() {
+    const ch = State.loadedChapters[State.currentChapter]; if (!ch) return;
+    const result = Stats.computeEnrichment(ch.languages);
+    const enabled = [...State.regions, ...State.customRegions].filter(r => r.enabled).map(r => r.name);
+    let t = `═══ WALS REFUGIA ANALYSIS EXPORT ═══\n`;
+    t += `Chapter: ${ch.name} (${ch.id})\nLanguages: ${ch.languages.length}\n`;
+    t += `Regions: ${enabled.join(', ')}\nBaseline: ${(result.baseline*100).toFixed(1)}% (${result.totalInRefugia}/${result.total})\n\n`;
+    // Enrichment table
+    t += `── ENRICHMENT ──\nFeature Value\tN\tIn Refugia\t% Refugia\tEnrichment\n`;
+    const keys = ch.codeOrder.length ? ch.codeOrder : Object.keys(result.byValue);
+    keys.forEach(code => {
+      const v = result.byValue[code]; if (!v) return;
+      t += `${v.label}\t${v.total}\t${v.inRefugia}\t${(v.pct*100).toFixed(1)}%\t${v.enrichment.toFixed(2)}×\n`;
+    });
+    State.compositeRows.forEach(cr => {
+      const comp = Stats.computeCompositeRow(ch.languages, cr.codes, result.baseline);
+      t += `[Composite] ${cr.name}\t${comp.total}\t${comp.inRefugia}\t${(comp.pct*100).toFixed(1)}%\t${comp.enrichment.toFixed(2)}×\n`;
+    });
+    // Region breakdown
+    if (result.enabledRegions?.length) {
+      t += `\n── REGION BREAKDOWN ──\nFeature Value\t` + result.enabledRegions.map(r=>r.name).join('\t') + '\n';
+      t += 'BASELINE\t' + result.enabledRegions.map(r=>(result.baselineByRegion[r.id]?.count||0)).join('\t') + '\n';
+      keys.forEach(code => {
+        const v = result.byValue[code]; if (!v) return;
+        t += v.label + '\t' + result.enabledRegions.map(r=>(v.byRegion[r.id]?.count||0)).join('\t') + '\n';
+      });
+    }
+    // Moran's I
+    const moranEl = document.getElementById('moranResults');
+    if (moranEl?.querySelector('table')) {
+      t += `\n── MORAN'S I ──\n`;
+      moranEl.querySelectorAll('tr').forEach(row => {
+        t += [...row.querySelectorAll('th,td')].map(c=>c.textContent.trim()).join('\t') + '\n';
+      });
+    }
+    // Phylo
+    const phyloEl = document.getElementById('phyloResults');
+    if (phyloEl?.querySelector('table')) {
+      t += `\n── PHYLOGENETIC CONTROL ──\n`;
+      const info = phyloEl.querySelector('div'); if (info) t += info.textContent.trim() + '\n';
+      phyloEl.querySelectorAll('table tr').forEach(row => {
+        t += [...row.querySelectorAll('th,td')].map(c=>c.textContent.trim()).join('\t') + '\n';
+      });
+    }
+    // Snapshots
+    if (State.snapshots.length) {
+      t += `\n── SENSITIVITY SNAPSHOTS ──\n`;
+      State.snapshots.forEach(s => {
+        t += `Config: ${s.label} | Baseline: ${(s.enrichment.baseline*100).toFixed(1)}%`;
+        for (const [code, v] of Object.entries(s.enrichment.byValue)) {
+          t += ` | ${v.label}: ${v.enrichment.toFixed(2)}×`;
+        }
+        t += '\n';
+      });
+    }
+    navigator.clipboard.writeText(t).then(() => UI.setStatus('📋 Full analysis exported to clipboard')).catch(() => UI.setStatus('⚠ Copy failed'));
+  },
+
+  computeMoran() {
+    const ch = State.loadedChapters[State.currentChapter]; if (!ch) return;
+    const btn = document.getElementById('btnMoran');
+    btn.classList.add('running'); btn.textContent = 'Computing...';
+    setTimeout(() => {
+      const results = {};
+      (ch.codeOrder.length ? ch.codeOrder : Object.keys(ch.codes)).forEach(code => {
+        results[code] = Stats.computeMoranI(ch.languages, code, CONFIG.moranK);
+      });
+      UI.renderMoran(results, ch);
+      btn.classList.remove('running'); btn.textContent = "Compute Moran's I";
+    }, 50);
+  },
+
+  computePhylo() {
+    const ch = State.loadedChapters[State.currentChapter]; if (!ch) return;
+    const sel = document.getElementById('phyloValueSelect');
+    const fv = sel ? sel.value : (ch.codeOrder[0] || Object.keys(ch.codes)[0]);
+    const btn = document.getElementById('btnPhylo');
+    btn.classList.add('running'); btn.textContent = 'Computing...';
+    setTimeout(() => {
+      UI.renderPhylo(Stats.computePhyloControl(ch.languages, fv), fv, ch);
+      btn.classList.remove('running'); btn.textContent = 'Compute Phylogenetic Control';
+    }, 50);
+  },
+
+  computeCooc() {
+    if (State.coocSelected.size < 2) return;
+    const chapters = {};
+    State.coocSelected.forEach(cid => { if (State.loadedChapters[cid]) chapters[cid] = State.loadedChapters[cid]; });
+    const btn = document.getElementById('btnCooc');
+    btn.classList.add('running'); btn.textContent = 'Computing...';
+    setTimeout(() => {
+      UI.renderCooc(Stats.computeCooccurrence(chapters));
+      btn.classList.remove('running'); btn.textContent = 'Compute Co-occurrence';
+    }, 50);
+  },
+
+  takeSnapshot() {
+    const ch = State.loadedChapters[State.currentChapter]; if (!ch) return;
+    const enabled = [...State.regions, ...State.customRegions].filter(r => r.enabled).map(r => r.name);
+    const label = enabled.length ? enabled.join(' + ') : '(none)';
+    State.snapshots.push({label, enrichment: Stats.computeEnrichment(ch.languages)});
+    UI.renderSensitivity();
+    UI.setStatus(`📸 Snapshot: ${label}`);
+  },
+
+  clearSnapshots() { State.snapshots = []; UI.renderSensitivity(); }
+};
+
+document.addEventListener('DOMContentLoaded', () => App.init());
+</script>
+</body>
+</html>
