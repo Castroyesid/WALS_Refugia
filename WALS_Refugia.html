@@ -223,9 +223,8 @@ const CONFIG = {
 };
 
 // ═══════════════════════════════════════════════════════════════
-// PREDEFINED REFUGIA REGIONS — per §3.2 v9
+// PREDEFINED REFUGIA REGIONS 
 // Boundary convention: south/west >=  north/east <  (half-open)
-// Isolated regions (Caucasus) and max-extent bounds use inclusive
 // ═══════════════════════════════════════════════════════════════
 const PREDEFINED_REGIONS = [
   // ── PRIMARY REFUGIA ──
@@ -241,7 +240,7 @@ const PREDEFINED_REGIONS = [
       return true;
     },
     polygons: [
-      [[-80,-100],[-80,-32],[0,-32],[0,-100]],
+      [[-90,-100],[-90,-32],[0,-32],[0,-100]],
       [[0,-130],[0,-32],[12.5,-32],[12.5,-130]],
       [[12.5,-130],[12.5,-32],[25,-32],[25,-130]],
       [[25,-180],[25,-32],[60,-32],[60,-180]],
@@ -261,7 +260,7 @@ const PREDEFINED_REGIONS = [
     polygons: [
       [[-11,125],[-11,150],[3,150],[3,125]],
       [[-20,110],[-20,150],[-11,150],[-11,110]],
-      [[-80,110],[-80,155],[-20,155],[-20,110]]
+      [[-90,110],[-90,155],[-20,155],[-20,110]]
     ]
   },
   {
@@ -271,72 +270,61 @@ const PREDEFINED_REGIONS = [
     polygons: [[[37,37],[37,50],[45,50],[45,37]]]
   },
 
-  // ── SUPPLEMENTAL: OCEANIA (merged Pacific Extensions + Sahul subregions) ──
+  // ── SUPPLEMENTAL: OCEANIA ──
   {
-    id: 'micronesia', name: 'Micronesia', group: 'Supplemental: Oceania',
-    hex: '#2ea87e', enabled: false,
-    test(lat, lon) { return lat >= 3 && lat < 20 && lon >= 130 && lon <= 180; },
-    polygons: [[[3,130],[3,180],[20,180],[20,130]]]
-  },
-  {
-    id: 'remote_melanesia', name: 'Remote Melanesia & SW Polynesia', group: 'Supplemental: Oceania',
+    id: 'polynesia', name: 'Polynesia', group: 'Supplemental: Oceania',
     hex: '#2ea87e', enabled: false,
     test(lat, lon) {
-      if (lat >= 3) return false;
-      if (lat >= -20) return lon >= 150 && lon <= 180;
-      return lon >= 155 && lon <= 180;
+      // Micronesia: 3-20°N, 130-180°E
+      if (lat >= 3 && lat < 20 && lon >= 130 && lon <= 180) return true;
+      // Remote Melanesia: two bands
+      if (lat >= -20 && lat < 3 && lon >= 150 && lon <= 180) return true;
+      if (lat < -20 && lon >= 155 && lon <= 180) return true;
+      // N Polynesia: 0-25°N, west of -130
+      if (lat >= 0 && lat < 25 && lon < -130 && lon >= -180) return true;
+      // S Polynesia: below 0°N, west of -100
+      if (lat < 0 && lon < -100 && lon >= -180) return true;
+      return false;
     },
-    polygons: [[[-20,150],[-20,180],[3,180],[3,150]],[[-80,155],[-80,180],[-20,180],[-20,155]]]
+    polygons: [
+      [[3,130],[3,180],[20,180],[20,130]],
+      [[-20,150],[-20,180],[3,180],[3,150]],
+      [[-90,155],[-90,180],[-20,180],[-20,155]],
+      [[0,-180],[0,-130],[25,-130],[25,-180]],
+      [[-90,-180],[-90,-100],[0,-100],[0,-180]]
+    ]
   },
   {
-    id: 'n_polynesia', name: 'N. Polynesia', group: 'Supplemental: Oceania',
-    hex: '#2ea87e', enabled: false,
-    test(lat, lon) { return lat >= 0 && lat < 25 && lon < -130; },
-    polygons: [[[0,-180],[0,-130],[25,-130],[25,-180]]]
-  },
-  {
-    id: 's_polynesia', name: 'S. Polynesia', group: 'Supplemental: Oceania',
-    hex: '#2ea87e', enabled: false,
-    test(lat, lon) { return lat < 0 && lon < -100; },
-    polygons: [[[-80,-180],[-80,-100],[0,-100],[0,-180]]]
-  },
-  {
-    id:'australia', name:'Australia', group:'Supplemental: Oceania',
+    id:'sahul_s', name:'Southern Sahul (Southern Australia)', group:'Supplemental: Oceania',
     hex:'#2ea87e', enabled:false,
     test(lat, lon) {
-      if (lat >= -11 || lon < 110) return false;
-      if (lat >= -20) return lon < 150;
+      if (lat >= -20 || lon < 110) return false;
       return lon < 155;
     },
-    polygons:[[[-20,110],[-20,150],[-11,150],[-11,110]],[[-80,110],[-80,155],[-20,155],[-20,110]]]
+    polygons:[[[-90,110],[-90,155],[-20,155],[-20,110]]]
   },
   {
-    id:'core_melanesia', name:'Core Melanesia', group:'Supplemental: Oceania',
+    id:'sahul_c', name:'Central Sahul (Northern Australia)', group:'Supplemental: Oceania',
+    hex:'#2ea87e', enabled:false,
+    test(lat, lon) {
+      return lat >= -20 && lat < -11 && lon >= 110 && lon < 150;
+    },
+    polygons:[[[-20,110],[-20,150],[-11,150],[-11,110]]]
+  },
+  {
+    id:'sahul_n', name:'Eastern Wallacea & Northern Sahul', group:'Supplemental: Oceania',
     hex:'#2ea87e', enabled:false,
     test(lat, lon) { return lat >= -11 && lat < 3 && lon >= 125 && lon < 150; },
     polygons:[[[-11,125],[-11,150],[3,150],[3,125]]]
   },
   {
-    id:'wallacea', name:'Wallacea & SE Sundaland', group:'Supplemental: Oceania',
+    id:'wallacea', name:'Western Wallacea & Southeast Sundaland', group:'Supplemental: Oceania',
     hex:'#2ea87e', enabled:false,
-    // Between Australia (110°E) and Core Melanesia (125°E), from -11 to 3
     test(lat, lon) { return lat >= -11 && lat < 3 && lon >= 110 && lon < 125; },
     polygons:[[[-11,110],[-11,125],[3,125],[3,110]]]
   },
 
   // ── SUPPLEMENTAL: AMERICAS ──
-  {
-    id:'south_america', name:'South America', group:'Supplemental: Americas',
-    hex:'#3b7dd8', enabled:false,
-    test(lat, lon) {
-      if (lon >= -32) return false;
-      if (lat < 0) return lon >= -100;
-      if (lat < 7) return lon >= -130;
-      if (lat < 12.5) return lon >= -77.5;
-      return false;
-    },
-    polygons:[[[-80,-100],[-80,-32],[0,-32],[0,-100]],[[0,-130],[0,-32],[7,-32],[7,-130]],[[7,-77.5],[7,-32],[12.5,-32],[12.5,-77.5]]]
-  },
   {
     id:'nw_south_america', name:'NW South America', group:'Supplemental: Americas',
     hex:'#3b7dd8', enabled:false,
@@ -366,18 +354,17 @@ const PREDEFINED_REGIONS = [
     id:'sw_south_america', name:'SW South America', group:'Supplemental: Americas',
     hex:'#3b7dd8', enabled:false,
     test(lat, lon) { return lat < -15 && lon >= -100 && lon < -65; },
-    polygons:[[[-80,-100],[-80,-65],[-15,-65],[-15,-100]]]
+    polygons:[[[-90,-100],[-90,-65],[-15,-65],[-15,-100]]]
   },
   {
     id:'se_south_america', name:'SE South America', group:'Supplemental: Americas',
     hex:'#3b7dd8', enabled:false,
     test(lat, lon) { return lat < -15 && lon >= -65 && lon < -32; },
-    polygons:[[[-80,-65],[-80,-32],[-15,-32],[-15,-65]]]
+    polygons:[[[-90,-65],[-90,-32],[-15,-32],[-15,-65]]]
   },
   {
     id:'nw_namerica', name:'NW North America', group:'Supplemental: Americas',
     hex:'#3b7dd8', enabled:false,
-    // Two polygons: 40–60°N (-180 to -100) + 60–85°N (-168 to -100, Siberian excl)
     test(lat, lon) {
       if (lon >= -100) return false;
       if (lat >= 60) return lat < 85 && lon >= -168;
@@ -388,7 +375,6 @@ const PREDEFINED_REGIONS = [
   {
     id:'ne_namerica', name:'NE North America', group:'Supplemental: Americas',
     hex:'#3b7dd8', enabled:false,
-    // Variable eastern edge: -32 from 40-67°N, -10 from 67-85°N
     test(lat, lon) {
       if (lon < -100) return false;
       if (lat >= 67) return lat < 85 && lon < -10;
@@ -409,17 +395,14 @@ const PREDEFINED_REGIONS = [
     polygons:[[[25,-100],[25,-32],[40,-32],[40,-100]]]
   },
   {
-    id:'central_america', name:'Central America', group:'Supplemental: Americas',
+    id:'central_america_antilles', name:'Central America & Antilles', group:'Supplemental: Americas',
     hex:'#3b7dd8', enabled:false,
-    // Western boundary = N Polynesia eastern edge (-130°)
-    test(lat, lon) { return lat >= 7 && lat < 25 && lon >= -130 && lon < -77.5; },
-    polygons:[[[7,-130],[7,-77.5],[25,-77.5],[25,-130]]]
-  },
-  {
-    id:'antilles', name:'Antilles', group:'Supplemental: Americas',
-    hex:'#3b7dd8', enabled:false,
-    test(lat, lon) { return lat >= 12.5 && lat < 25 && lon >= -77.5 && lon < -32; },
-    polygons:[[[12.5,-77.5],[12.5,-32],[25,-32],[25,-77.5]]]
+    test(lat, lon) {
+      if (lat < 7 || lat >= 25) return false;
+      if (lat >= 12.5) return lon >= -130 && lon < -32;
+      return lon >= -130 && lon < -77.5;
+    },
+    polygons:[[[7,-130],[7,-77.5],[25,-77.5],[25,-130]],[[12.5,-77.5],[12.5,-32],[25,-32],[25,-77.5]]]
   },
 
   // ── SUPPLEMENTAL: WESTERN AFRO-EURASIA (Africa + Europe) ──
@@ -432,7 +415,6 @@ const PREDEFINED_REGIONS = [
   {
     id:'mediterranean', name:'Mediterranean', group:'Supplemental: Western Afro-Eurasia',
     hex:'#c44444', enabled:false,
-    // 30–37°N: to 30°E; 37–45°N: extends to 37°E (Turkey/Black Sea gap)
     test(lat, lon) {
       if (lat < 30 || lat >= 45 || lon < -32) return false;
       return lon < (lat >= 37 ? 37 : 30);
@@ -440,21 +422,14 @@ const PREDEFINED_REGIONS = [
     polygons:[[[30,-32],[30,30],[37,30],[37,-32]],[[37,-32],[37,37],[45,37],[45,-32]]]
   },
   {
-    id:'nw_europe', name:'NW Europe', group:'Supplemental: Western Afro-Eurasia',
+    id:'europe_nw', name:'Northwest Europe', group:'Supplemental: Western Afro-Eurasia',
     hex:'#c44444', enabled:false,
-    // Western boundary meets Americas: -32 from 45-67°N, -10 from 67°N+
     test(lat, lon) {
       if (lon >= 10) return false;
       if (lat >= 67) return lon >= -10;
       return lat >= 45 && lon >= -32;
     },
     polygons:[[[45,-32],[45,10],[67,10],[67,-32]],[[67,-10],[67,10],[90,10],[90,-10]]]
-  },
-  {
-    id:'ne_europe_nw_asia', name:'NE Europe & NW Asia', group:'Supplemental: Western Afro-Eurasia',
-    hex:'#c44444', enabled:false,
-    test(lat, lon) { return lat >= 45 && lon >= 10 && lon < 50; },
-    polygons:[[[45,10],[45,50],[90,50],[90,10]]]
   },
   {
     id:'west_africa', name:'West Africa', group:'Supplemental: Western Afro-Eurasia',
@@ -465,7 +440,6 @@ const PREDEFINED_REGIONS = [
   {
     id:'central_africa', name:'Central Africa', group:'Supplemental: Western Afro-Eurasia',
     hex:'#c44444', enabled:false,
-    // 0–15°N: 15–30°E; -15–0°N: -32–30°E
     test(lat, lon) {
       if (lat >= 0 && lat < 15 && lon >= 15 && lon < 30) return true;
       if (lat >= -15 && lat < 0 && lon >= -32 && lon < 30) return true;
@@ -477,7 +451,7 @@ const PREDEFINED_REGIONS = [
     id:'south_africa', name:'South Africa', group:'Supplemental: Western Afro-Eurasia',
     hex:'#c44444', enabled:false,
     test(lat, lon) { return lat < -15 && lon >= -32 && lon < 41; },
-    polygons:[[[-80,-32],[-80,41],[-15,41],[-15,-32]]]
+    polygons:[[[-90,-32],[-90,41],[-15,41],[-15,-32]]]
   },
   {
     id:'rift_valley', name:'Rift Valley & Great Lakes', group:'Supplemental: Western Afro-Eurasia',
@@ -488,35 +462,40 @@ const PREDEFINED_REGIONS = [
   {
     id:'east_africa', name:'East Africa', group:'Supplemental: Western Afro-Eurasia',
     hex:'#c44444', enabled:false,
-    // Above -15: 37–60°E; Below -15: 41–60°E (east of S Africa)
     test(lat, lon) {
       if (lat >= -15) return lat < 12.5 && lon >= 37 && lon < 60;
       return lon >= 41 && lon < 60;
     },
-    polygons:[[[-15,37],[-15,60],[12.5,60],[12.5,37]],[[-80,41],[-80,60],[-15,60],[-15,41]]]
+    polygons:[[[-15,37],[-15,60],[12.5,60],[12.5,37]],[[-90,41],[-90,60],[-15,60],[-15,41]]]
   },
 
   // ── SUPPLEMENTAL: EASTERN AFRO-EURASIA (merged Caucasus + Asia) ──
+    {
+    id:'asia_nw', name:'Northeast Europe & Northwest Asia', group:'Supplemental: Eastern Afro-Eurasia',
+    hex:'#d4982a', enabled:false,
+    test(lat, lon) { return lat >= 45 && lon >= 10 && lon < 50; },
+    polygons:[[[45,10],[45,50],[90,50],[90,10]]]
+  },
   {
-    id:'caucasus_nw', name:'NW Caucasus', group:'Supplemental: Eastern Afro-Eurasia',
+    id:'caucasus_nw', name:'Northwest Caucasus', group:'Supplemental: Eastern Afro-Eurasia',
     hex:'#d4982a', enabled:false,
     test(lat, lon) { return lat >= 42.5 && lat < 45 && lon >= 37 && lon < 44.5; },
     polygons:[[[42.5,37],[42.5,44.5],[45,44.5],[45,37]]]
   },
   {
-    id:'caucasus_ne', name:'NE Caucasus', group:'Supplemental: Eastern Afro-Eurasia',
+    id:'caucasus_ne', name:'Northeast Caucasus', group:'Supplemental: Eastern Afro-Eurasia',
     hex:'#d4982a', enabled:false,
     test(lat, lon) { return lat >= 42.5 && lat < 45 && lon >= 44.5 && lon < 50; },
     polygons:[[[42.5,44.5],[42.5,50],[45,50],[45,44.5]]]
   },
   {
-    id:'caucasus_sw', name:'SW Caucasus', group:'Supplemental: Eastern Afro-Eurasia',
+    id:'caucasus_sw', name:'Southwest Caucasus', group:'Supplemental: Eastern Afro-Eurasia',
     hex:'#d4982a', enabled:false,
     test(lat, lon) { return lat >= 37 && lat < 42.5 && lon >= 37 && lon < 44.5; },
     polygons:[[[37,37],[37,44.5],[42.5,44.5],[42.5,37]]]
   },
   {
-    id:'caucasus_se', name:'SE Caucasus', group:'Supplemental: Eastern Afro-Eurasia',
+    id:'caucasus_se', name:'Southeast Caucasus', group:'Supplemental: Eastern Afro-Eurasia',
     hex:'#d4982a', enabled:false,
     test(lat, lon) { return lat >= 37 && lat < 42.5 && lon >= 44.5 && lon < 50; },
     polygons:[[[37,44.5],[37,50],[42.5,50],[42.5,44.5]]]
@@ -528,42 +507,38 @@ const PREDEFINED_REGIONS = [
     polygons:[[[12.5,30],[12.5,45],[37,45],[37,30]]]
   },
   {
-    id:'aden_persian', name:'Aden & Persian Gulfs', group:'Supplemental: Eastern Afro-Eurasia',
+    id:'asia_sw', name:'Southwest Asia', group:'Supplemental: Eastern Afro-Eurasia',
     hex:'#d4982a', enabled:false,
     test(lat, lon) { return lat >= 12.5 && lat < 37 && lon >= 45 && lon < 60; },
     polygons:[[[12.5,45],[12.5,60],[37,60],[37,45]]]
   },
   {
-    id:'south_asia', name:'South Asia', group:'Supplemental: Eastern Afro-Eurasia',
+    id:'asia_south', name:'South Asia', group:'Supplemental: Eastern Afro-Eurasia',
     hex:'#d4982a', enabled:false,
     test(lat, lon) { return lat < 37 && lon >= 60 && lon < 90; },
-    polygons:[[[-80,60],[-80,90],[37,90],[37,60]]]
+    polygons:[[[-90,60],[-90,90],[37,90],[37,60]]]
   },
   {
-    id:'se_asia', name:'SE Asia', group:'Supplemental: Eastern Afro-Eurasia',
+    id:'asia_se', name:'Southeast Asia', group:'Supplemental: Eastern Afro-Eurasia',
     hex:'#d4982a', enabled:false,
-    // 90–110°E, from -80 (catch-all) to 37°N (matching S Asia)
     test(lat, lon) { return lat < 37 && lon >= 90 && lon < 110; },
-    polygons:[[[-80,90],[-80,110],[37,110],[37,90]]]
+    polygons:[[[-90,90],[-90,110],[37,110],[37,90]]]
   },
   {
     id:'phil_china_seas', name:'Philippine & China Seas', group:'Supplemental: Eastern Afro-Eurasia',
     hex:'#d4982a', enabled:false,
-    // 110–130°E, 3°N (Wallacea top) to 37°N (matching SE Asia)
     test(lat, lon) { return lat >= 3 && lat < 37 && lon >= 110 && lon < 130; },
     polygons:[[[3,110],[3,130],[37,130],[37,110]]]
   },
   {
     id:'north_central_asia', name:'North & Central Asia', group:'Supplemental: Eastern Afro-Eurasia',
     hex:'#d4982a', enabled:false,
-    // Simple rectangle: 37–85°N, 50–130°E
     test(lat, lon) { return lat >= 37 && lat < 85 && lon >= 50 && lon < 130; },
     polygons:[[[37,50],[37,130],[85,130],[85,50]]]
   },
   {
-    id:'ne_asia', name:'NE Asia', group:'Supplemental: Eastern Afro-Eurasia',
+    id:'asia_ne', name:'Northeast Asia (Japan & Eastern Russia)', group:'Supplemental: Eastern Afro-Eurasia',
     hex:'#d4982a', enabled:false,
-    // 130–180°E, 20–85°N + Siberian extension (-180 to -168, 60-85°N)
     test(lat, lon) {
       if (lat >= 20 && lat < 85 && lon >= 130 && lon <= 180) return true;
       if (lat >= 60 && lat < 85 && lon >= -180 && lon < -168) return true;
@@ -572,7 +547,6 @@ const PREDEFINED_REGIONS = [
     polygons:[[[20,130],[20,180],[85,180],[85,130]],[[60,-180],[60,-168],[85,-168],[85,-180]]]
   }
 ];
-
 // ═══════════════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════════════
