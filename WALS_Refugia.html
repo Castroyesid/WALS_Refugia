@@ -199,7 +199,18 @@ select option { background:#1a1f2e; color:#e8e6df; }
         <div class="section-body collapsed" id="bodyCooc">
           <div id="coocChapters" style="margin-bottom:6px"></div>
           <div id="coocResults"><div class="empty-state"><p>Load ≥2 chapters to cross-tabulate.</p></div></div>
-          <div class="analysis-actions"><button class="btn-sm btn-primary" id="btnCooc" onclick="App.computeCooc()" disabled>Compute Co-occurrence</button></div>
+          <div class="analysis-actions">
+            <button class="btn-sm btn-primary" id="btnCooc" onclick="App.computeCooc()" disabled>Compute Co-occurrence</button>
+            <button class="btn-sm btn-primary" id="btnShowValues" onclick="App.showCoocValues()" disabled>Show Values</button>
+          </div>
+          
+          <!-- Language list viewer -->
+          <div id="coocLanguageViewer" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--card-border)">
+            <div style="font-size:11px;font-weight:600;margin-bottom:6px">SELECT FEATURE VALUES:</div>
+            <div id="coocValueCheckboxes" style="margin-bottom:8px"></div>
+            <div id="coocLanguageCount" style="font-size:11px;font-weight:600;margin-bottom:4px"></div>
+            <div id="coocLanguageList"><div class="empty-state" style="padding:12px"><p>Select feature values above to see matching languages</p></div></div>
+          </div>
         </div>
       </div>
     </div>
@@ -1561,6 +1572,7 @@ const UI = {
         if (State.coocSelected.has(cid)) State.coocSelected.delete(cid); else State.coocSelected.add(cid);
         chip.classList.toggle('active');
         document.getElementById('btnCooc').disabled = State.coocSelected.size < 2;
+        document.getElementById('btnShowValues').disabled = State.coocSelected.size < 1;
       };
       container.appendChild(chip);
     }
@@ -1762,6 +1774,176 @@ const App = {
       UI.renderCooc(Stats.computeCooccurrence(chapters));
       btn.classList.remove('running'); btn.textContent = 'Compute Co-occurrence';
     }, 50);
+  },
+  
+  showCoocValues() {
+    const viewer = document.getElementById('coocLanguageViewer');
+    const checkboxContainer = document.getElementById('coocValueCheckboxes');
+    
+    if (State.coocSelected.size < 1) return;
+    
+    // Show the viewer
+    viewer.style.display = 'block';
+    
+    // Build checkboxes for each value in each selected chapter
+    checkboxContainer.innerHTML = '';
+    
+    for (const cid of State.coocSelected) {
+      const ch = State.loadedChapters[cid];
+      if (!ch) continue;
+      
+      const chapterGroup = document.createElement('div');
+      chapterGroup.style.cssText = 'margin-bottom:8px';
+      
+      const chapterLabel = document.createElement('div');
+      chapterLabel.style.cssText = 'font-size:10px;font-weight:600;color:var(--text-muted);margin-bottom:2px';
+      chapterLabel.textContent = ch.name;
+      chapterGroup.appendChild(chapterLabel);
+      
+      const keys = ch.codeOrder.length ? ch.codeOrder : Object.keys(ch.codes);
+      keys.forEach(code => {
+        const label = document.createElement('label');
+        label.style.cssText = 'display:flex;align-items:center;gap:4px;font-size:12px;padding:2px 0;cursor:pointer';
+        
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.style.cssText = 'accent-color:var(--accent);cursor:pointer';
+        cb.dataset.chapterId = cid;
+        cb.dataset.valueCode = code;
+        cb.addEventListener('change', () => App.updateCoocLanguageList());
+        
+        const text = document.createElement('span');
+        text.textContent = ch.codes[code] || code;
+        
+        label.appendChild(cb);
+        label.appendChild(text);
+        chapterGroup.appendChild(label);
+      });
+      
+      checkboxContainer.appendChild(chapterGroup);
+    }
+  },
+
+  updateCoocLanguageList() {
+    const listContainer = document.getElementById('coocLanguageList');
+    const countContainer = document.getElementById('coocLanguageCount');
+    
+    // Get all checked values
+    const selectedFeatures = [];
+    document.querySelectorAll('#coocValueCheckboxes input[type="checkbox"]:checked').forEach(cb => {
+      selectedFeatures.push({
+        chapterId: cb.dataset.chapterId,
+        valueCode: cb.dataset.valueCode
+      });
+    });
+    
+    if (selectedFeatures.length === 0) {
+      listContainer.innerHTML = '<div class="empty-state" style="padding:12px"><p>Select feature values above to see matching languages</p></div>';
+      countContainer.textContent = '';
+      return;
+    }
+    
+    // Find languages that have ALL selected features
+    const chapters = Array.from(State.coocSelected).map(cid => State.loadedChapters[cid]).filter(Boolean);
+    if (chapters.length === 0) return;
+    
+    // Build language lookup by ID across chapters
+    const langsByChapter = {};
+    selectedFeatures.forEach(sf => {
+      const ch = State.loadedChapters[sf.chapterId];
+      if (!ch) return;
+      langsByChapter[sf.chapterId] = {};
+      ch.languages.forEach(l => {
+        langsByChapter[sf.chapterId][l.id] = l;
+      });
+    });
+    
+    // Find common language IDs across all selected chapters
+    const firstChapter = selectedFeatures[0].chapterId;
+    let commonIds = new Set(Object.keys(langsByChapter[firstChapter] || {}));
+    
+    selectedFeatures.slice(1).forEach(sf => {
+      const chapterIds = new Set(Object.keys(langsByChapter[sf.chapterId] || {}));
+      commonIds = new Set([...commonIds].filter(id => chapterIds.has(id)));
+    });
+    
+    // Filter to languages that match ALL selected feature values
+    const matchingLangs = [];
+    for (const lid of commonIds) {
+      let matches = true;
+      for (const sf of selectedFeatures) {
+        const lang = langsByChapter[sf.chapterId][lid];
+        if (!lang || lang.value !== sf.valueCode) {
+          matches = false;
+          break;
+        }
+      }
+      if (matches) {
+        // Use the language object from the first chapter
+        matchingLangs.push(langsByChapter[firstChapter][lid]);
+      }
+    }
+    
+    // Group by tier
+    const tierGroups = {};
+    matchingLangs.forEach(lang => {
+      // Determine which tier this language belongs to
+      let tierName = 'Non-Refugia';
+      let tierNum = 5;
+      
+      for (const [tierKey, tierData] of Object.entries(TIER_STRUCTURE)) {
+        const tierRegions = State.regions.filter(r => tierData.regions.includes(r.id));
+        for (const r of tierRegions) {
+          if (r.test(lang.lat, lang.lon)) {
+            tierName = tierData.name;
+            tierNum = parseInt(tierKey.replace('tier', ''));
+            break;
+          }
+        }
+        if (tierName !== 'Non-Refugia') break;
+      }
+      
+      // Also get specific region
+      let regionName = 'Unknown';
+      for (const r of State.regions) {
+        if (r.test(lang.lat, lang.lon)) {
+          regionName = r.name;
+          break;
+        }
+      }
+      
+      if (!tierGroups[tierNum]) {
+        tierGroups[tierNum] = {name: tierName, langs: []};
+      }
+      tierGroups[tierNum].langs.push({...lang, regionName});
+    });
+    
+    // Render
+    countContainer.textContent = `Showing ${matchingLangs.length} language${matchingLangs.length !== 1 ? 's' : ''}`;
+    
+    if (matchingLangs.length === 0) {
+      listContainer.innerHTML = '<div class="empty-state" style="padding:12px"><p>No languages match all selected features</p></div>';
+      return;
+    }
+    
+    let html = '<table class="stats-table"><tr><th>Tier</th><th>Language</th><th>Region</th><th>Family</th></tr>';
+    
+    // Sort by tier number
+    const sortedTiers = Object.keys(tierGroups).sort((a, b) => parseInt(a) - parseInt(b));
+    
+    sortedTiers.forEach(tierNum => {
+      const group = tierGroups[tierNum];
+      // Sort languages within tier alphabetically
+      group.langs.sort((a, b) => a.name.localeCompare(b.name));
+      
+      group.langs.forEach((lang, idx) => {
+        const tierCell = idx === 0 ? `<td rowspan="${group.langs.length}" style="vertical-align:top;font-weight:600;color:var(--text-muted)">${group.name}</td>` : '';
+        html += `<tr>${tierCell}<td>${lang.name}</td><td style="font-size:11px;color:var(--text-muted)">${lang.regionName}</td><td style="font-size:11px;color:var(--text-muted)">${lang.family || 'Unknown'}</td></tr>`;
+      });
+    });
+    
+    html += '</table>';
+    listContainer.innerHTML = html;
   },
 
   takeSnapshot() {
