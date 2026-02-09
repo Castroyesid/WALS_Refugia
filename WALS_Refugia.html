@@ -108,6 +108,8 @@ select option { background:#1a1f2e; color:#e8e6df; }
 .btn-x:hover { opacity:1; }
 .debug-log { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); margin-top:6px; max-height:120px; overflow-y:auto; padding:4px 6px; background:#fafaf7; border-radius:var(--radius); border:1px solid var(--card-border); white-space:pre-wrap; }
 @media (max-width:900px) { .main{flex-direction:column;} .sidebar{width:100%;max-height:50vh;} #map{min-height:50vh;} }
+.leaflet-interactive:focus { outline: none !important; }
+.leaflet-interactive:active { outline: none !important; }
 </style>
 </head>
 <body>
@@ -521,11 +523,11 @@ const TIER_STRUCTURE = {
               'asia_se', 'phil_china_seas', 'asia_ne', 'polynesia']
   },
   'tier4': {
-    name: 'Tier 4: Africa',
+    name: 'Tier 4: Southwestern Afro-Eurasia',
     regions: ['sahara', 'west_africa', 'central_africa', 'rift_valley', 'east_africa', 'south_africa']
   },
   'tier5': {
-    name: 'Tier 5: Non-Refugia',
+    name: 'Tier 5: Northwestern Afro-Eurasia',
     regions: ['mediterranean', 'europe_nw', 'asia_nw', 'levant', 'asia_sw', 'asia_south', 'north_central_asia']
   }
 };
@@ -972,7 +974,17 @@ const MapManager = {
         opacity: r.enabled ? 0.25 : 0.08,
         dashArray: r.enabled ? null : '4 4'
       }).addTo(State.map);
-      layer.bindTooltip(r.name, {sticky: true, className: 'region-tooltip'});
+      
+      // Bind tooltip only if enabled
+      if (r.enabled) {
+        layer.bindTooltip(r.name, {sticky: true, className: 'region-tooltip'});
+      }
+      
+      // Prevent click highlighting but allow hover
+      layer.on('click', function(e) {
+        L.DomEvent.stopPropagation(e);
+      });
+      
       layer._regionId = r.id;
       State.regionLayers[r.id] = layer;
     });
@@ -1012,8 +1024,28 @@ const MapManager = {
         opacity: enabled ? 0.25 : 0.08,
         dashArray: enabled ? null : '4 4'
       });
+      
+      // Toggle interactivity based on enabled state
+      if (enabled) {
+        layer.options.interactive = true;
+        layer._path.style.pointerEvents = 'auto';
+      } else {
+        layer.options.interactive = false;
+        layer._path.style.pointerEvents = 'none';
+      }
+      
+      // Update tooltip based on enabled state
+      const region = State.regions.find(r => r.id === regionId);
+      if (region) {
+        if (enabled && !layer.getTooltip()) {
+          layer.bindTooltip(region.name, {sticky: true, className: 'region-tooltip'});
+        } else if (!enabled && layer.getTooltip()) {
+          layer.unbindTooltip();
+        }
+      }
       return;
     }
+    
     const custom = State.customRegions.find(r => r.id === regionId);
     if (custom && custom.layer) {
       custom.layer.setStyle({
@@ -1025,7 +1057,7 @@ const MapManager = {
       });
     }
   },
-
+  
   renderLanguages(chapter) {
     State.markers.clearLayers();
     if (!chapter) return;
