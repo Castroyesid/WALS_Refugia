@@ -330,60 +330,18 @@ const PREDEFINED_REGIONS = [
   },
 
   // ── EASTERN AFRO-EURASIA ──
-
-  {
-    id:'sahul_s', name:'Southern Sahul (Southern Australia)', group:'Eastern Afro-Eurasia',
-    hex:'#8e44ad', enabled:false,
-    test(lat, lon) {
-      if (lat >= -20 || lon < 110) return false;
-      return lon < 155;
-    },
-    polygons:[[[-90,110],[-90,155],[-20,155],[-20,110]]]
-  },
-  {
-    id:'sahul_c', name:'Central Sahul (Northern Australia)', group:'Eastern Afro-Eurasia',
-    hex:'#8e44ad', enabled:false,
-    test(lat, lon) {
-      return lat >= -20 && lat < -11 && lon >= 110 && lon < 150;
-    },
-    polygons:[[[-20,110],[-20,150],[-11,150],[-11,110]]]
-  },
-  {
-    id:'sahul_n', name:'Eastern Wallacea & Northern Sahul', group:'Eastern Afro-Eurasia',
-    hex:'#8e44ad', enabled:false,
-    test(lat, lon) { return lat >= -11 && lat < 3 && lon >= 125 && lon < 150; },
-    polygons:[[[-11,125],[-11,150],[3,150],[3,125]]]
-  },
-  {
-    id:'wallacea', name:'Western Wallacea & Southeast Sundaland', group:'Eastern Afro-Eurasia',
-    hex:'#8e44ad', enabled:false,
-    test(lat, lon) { return lat >= -11 && lat < 3 && lon >= 110 && lon < 125; },
-    polygons:[[[-11,110],[-11,125],[3,125],[3,110]]]
-  },
-  {
-    id:'polynesia', name:'Polynesia', group:'Eastern Afro-Eurasia',
-    hex:'#8e44ad', enabled:false,
-    test(lat, lon) {
-      if (lat >= 3 && lat < 20 && lon >= 130 && lon <= 180) return true;
-      if (lat >= -20 && lat < 3 && lon >= 150 && lon <= 180) return true;
-      if (lat < -20 && lon >= 155 && lon <= 180) return true;
-      if (lat >= 0 && lat < 25 && lon < -130 && lon >= -180) return true;
-      if (lat < 0 && lon < -100 && lon >= -180) return true;
-      return false;
-    },
-    polygons: [
-      [[3,130],[3,180],[20,180],[20,130]],
-      [[-20,150],[-20,180],[3,180],[3,150]],
-      [[-90,155],[-90,180],[-20,180],[-20,155]],
-      [[0,-180],[0,-130],[25,-130],[25,-180]],
-      [[-90,-180],[-90,-100],[0,-100],[0,-180]]
-    ]
-  },
+  
   {
     id:'asia_sw', name:'Southwest Asia', group:'Eastern Afro-Eurasia',
     hex:'#8e44ad', enabled:false,
     test(lat, lon) { return lat >= 12.5 && lat < 37 && lon >= 45 && lon < 60; },
     polygons:[[[12.5,45],[12.5,60],[37,60],[37,45]]]
+  },
+  {
+    id:'north_central_asia', name:'North & Central Asia', group:'Eastern Afro-Eurasia',
+    hex:'#8e44ad', enabled:false,
+    test(lat, lon) { return lat >= 37 && lat < 85 && lon >= 50 && lon < 130; },
+    polygons:[[[37,50],[37,130],[85,130],[85,50]]]
   },
   {
     id:'asia_south', name:'South Asia', group:'Eastern Afro-Eurasia',
@@ -404,11 +362,54 @@ const PREDEFINED_REGIONS = [
     polygons:[[[3,110],[3,130],[37,130],[37,110]]]
   },
   {
-    id:'north_central_asia', name:'North & Central Asia', group:'Eastern Afro-Eurasia',
+    id:'wallacea', name:'Western Wallacea & Southeast Sundaland', group:'Eastern Afro-Eurasia',
     hex:'#8e44ad', enabled:false,
-    test(lat, lon) { return lat >= 37 && lat < 85 && lon >= 50 && lon < 130; },
-    polygons:[[[37,50],[37,130],[85,130],[85,50]]]
+    test(lat, lon) { return lat >= -11 && lat < 3 && lon >= 110 && lon < 125; },
+    polygons:[[[-11,110],[-11,125],[3,125],[3,110]]]
   },
+  {
+    id:'sahul_n', name:'Eastern Wallacea & Northern Sahul', group:'Eastern Afro-Eurasia',
+    hex:'#8e44ad', enabled:false,
+    test(lat, lon) { return lat >= -11 && lat < 3 && lon >= 125 && lon < 150; },
+    polygons:[[[-11,125],[-11,150],[3,150],[3,125]]]
+  },
+  {
+    id:'sahul_c', name:'Central Sahul (Northern Australia)', group:'Eastern Afro-Eurasia',
+    hex:'#8e44ad', enabled:false,
+    test(lat, lon) {
+      return lat >= -20 && lat < -11 && lon >= 110 && lon < 150;
+    },
+    polygons:[[[-20,110],[-20,150],[-11,150],[-11,110]]]
+  },
+  {
+    id:'sahul_s', name:'Southern Sahul (Southern Australia)', group:'Eastern Afro-Eurasia',
+    hex:'#8e44ad', enabled:false,
+    test(lat, lon) {
+      if (lat >= -20 || lon < 110) return false;
+      return lon < 155;
+    },
+    polygons:[[[-90,110],[-90,155],[-20,155],[-20,110]]]
+  },
+  {
+    id:'polynesia', name:'Polynesia', group:'Eastern Afro-Eurasia',
+    hex:'#8e44ad', enabled:false,
+    test(lat, lon) {
+      if (lat >= 3 && lat < 20 && lon >= 130 && lon <= 180) return true;
+      if (lat >= -20 && lat < 3 && lon >= 150 && lon <= 180) return true;
+      if (lat < -20 && lon >= 155 && lon <= 180) return true;
+      if (lat >= 0 && lat < 25 && lon < -130 && lon >= -180) return true;
+      if (lat < 0 && lon < -100 && lon >= -180) return true;
+      return false;
+    },
+    polygons: [
+      [[3,130],[3,180],[20,180],[20,130]],
+      [[-20,150],[-20,180],[3,180],[3,150]],
+      [[-90,155],[-90,180],[-20,180],[-20,155]],
+      [[0,-180],[0,-130],[25,-130],[25,-180]],
+      [[-90,-180],[-90,-100],[0,-100],[0,-180]]
+    ]
+  },
+  
   {
     id:'asia_ne', name:'Northeast Asia', group:'Eastern Afro-Eurasia',
     hex:'#8e44ad', enabled:false,
