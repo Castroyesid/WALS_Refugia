@@ -229,19 +229,50 @@ const CONFIG = {
 const PREDEFINED_REGIONS = [
   // ── AMERICAS ──
   {
-    id:'se_south_america', name:'SE South America', group:'Americas',
+    id:'a_nnw', name:'Northwest North America', group:'Americas',
     hex:'#3b7dd8', enabled:false,
-    test(lat, lon) { return lat < -15 && lon >= -65 && lon < -32; },
-    polygons:[[[-90,-65],[-90,-32],[-15,-32],[-15,-65]]]
+    test(lat, lon) {
+      if (lon >= -100) return false;
+      if (lat >= 60) return lat < 85 && lon >= -168;
+      return lat >= 40;
+    },
+    polygons:[[[40,-180],[40,-100],[60,-100],[60,-180]],[[60,-168],[60,-100],[85,-100],[85,-168]]]
   },
   {
-    id:'sw_south_america', name:'SW South America', group:'Americas',
+    id:'a_nne', name:'Northeast North America', group:'Americas',
     hex:'#3b7dd8', enabled:false,
-    test(lat, lon) { return lat < -15 && lon >= -100 && lon < -65; },
-    polygons:[[[-90,-100],[-90,-65],[-15,-65],[-15,-100]]]
+    test(lat, lon) {
+      if (lon < -100) return false;
+      if (lat >= 67) return lat < 85 && lon < -10;
+      return lat >= 40 && lon < -32;
+    },
+    polygons:[[[40,-100],[40,-32],[67,-32],[67,-10],[85,-10],[85,-100]]]
   },
   {
-    id:'nw_south_america', name:'NW South America', group:'Americas',
+    id:'a_nse', name:'Southeast North America', group:'Americas',
+    hex:'#3b7dd8', enabled:false,
+    test(lat, lon) { return lat >= 25 && lat < 40 && lon >= -100 && lon < -32; },
+    polygons:[[[25,-100],[25,-32],[40,-32],[40,-100]]]
+  },
+
+  {
+    id:'a_nsw', name:'Southwest North America', group:'Americas',
+    hex:'#3b7dd8', enabled:false,
+    test(lat, lon) { return lat >= 25 && lat < 40 && lon >= -180 && lon < -100; },
+    polygons:[[[25,-180],[25,-100],[40,-100],[40,-180]]]
+  },
+  {
+    id:'a_c', name:'Central America & Antilles', group:'Americas',
+    hex:'#3b7dd8', enabled:false,
+    test(lat, lon) {
+      if (lat < 7 || lat >= 25) return false;
+      if (lat >= 12.5) return lon >= -130 && lon < -32;
+      return lon >= -130 && lon < -77.5;
+    },
+    polygons:[[[7,-130],[7,-77.5],[25,-77.5],[25,-130]],[[12.5,-77.5],[12.5,-32],[25,-32],[25,-77.5]]]
+  },
+  {
+    id:'a_snw', name:'Northwest South America', group:'Americas',
     hex:'#3b7dd8', enabled:false,
     test(lat, lon) {
       if (lat < -15 || lon >= -65) return false;
@@ -253,7 +284,7 @@ const PREDEFINED_REGIONS = [
     polygons:[[[-15,-100],[-15,-65],[0,-65],[0,-100]],[[0,-130],[0,-65],[7,-65],[7,-130]],[[7,-77.5],[7,-65],[12.5,-65],[12.5,-77.5]]]
   },
   {
-    id:'ne_south_america', name:'NE South America', group:'Americas',
+    id:'a_sne', name:'Northeast South America', group:'Americas',
     hex:'#3b7dd8', enabled:false,
     test(lat, lon) {
       if (lon < -65 || lon >= -32) return false;
@@ -266,48 +297,17 @@ const PREDEFINED_REGIONS = [
     polygons:[[[-15,-65],[-15,-32],[0,-32],[0,-65]],[[0,-65],[0,-32],[7,-32],[7,-65]],[[7,-65],[7,-32],[12.5,-32],[12.5,-65]]]
   },
   {
-    id:'central_america_antilles', name:'Central America & Antilles', group:'Americas',
+    id:'a_sse', name:'Southeast South America', group:'Americas',
     hex:'#3b7dd8', enabled:false,
-    test(lat, lon) {
-      if (lat < 7 || lat >= 25) return false;
-      if (lat >= 12.5) return lon >= -130 && lon < -32;
-      return lon >= -130 && lon < -77.5;
-    },
-    polygons:[[[7,-130],[7,-77.5],[25,-77.5],[25,-130]],[[12.5,-77.5],[12.5,-32],[25,-32],[25,-77.5]]]
+    test(lat, lon) { return lat < -15 && lon >= -65 && lon < -32; },
+    polygons:[[[-90,-65],[-90,-32],[-15,-32],[-15,-65]]]
   },
   {
-    id:'nw_namerica', name:'NW North America', group:'Americas',
+    id:'a_ssw', name:'Southwest South America', group:'Americas',
     hex:'#3b7dd8', enabled:false,
-    test(lat, lon) {
-      if (lon >= -100) return false;
-      if (lat >= 60) return lat < 85 && lon >= -168;
-      return lat >= 40;
-    },
-    polygons:[[[40,-180],[40,-100],[60,-100],[60,-180]],[[60,-168],[60,-100],[85,-100],[85,-168]]]
+    test(lat, lon) { return lat < -15 && lon >= -100 && lon < -65; },
+    polygons:[[[-90,-100],[-90,-65],[-15,-65],[-15,-100]]]
   },
-  {
-    id:'ne_namerica', name:'NE North America', group:'Americas',
-    hex:'#3b7dd8', enabled:false,
-    test(lat, lon) {
-      if (lon < -100) return false;
-      if (lat >= 67) return lat < 85 && lon < -10;
-      return lat >= 40 && lon < -32;
-    },
-    polygons:[[[40,-100],[40,-32],[67,-32],[67,-10],[85,-10],[85,-100]]]
-  },
-  {
-    id:'sw_namerica', name:'SW North America', group:'Americas',
-    hex:'#3b7dd8', enabled:false,
-    test(lat, lon) { return lat >= 25 && lat < 40 && lon >= -180 && lon < -100; },
-    polygons:[[[25,-180],[25,-100],[40,-100],[40,-180]]]
-  },
-  {
-    id:'se_namerica', name:'SE North America', group:'Americas',
-    hex:'#3b7dd8', enabled:false,
-    test(lat, lon) { return lat >= 25 && lat < 40 && lon >= -100 && lon < -32; },
-    polygons:[[[25,-100],[25,-32],[40,-32],[40,-100]]]
-  },
-
   // ── WESTERN AFRO-EURASIA ──
   {
     id:'sahara', name:'Sahara', group:'Western Afro-Eurasia',
@@ -452,7 +452,7 @@ const PREDEFINED_REGIONS = [
     ]
   },
   {
-    id:'asia_nw', name:'Northeast Europe & Northwest Asia', group:'Eastern Afro-Eurasia',
+    id:'asia_nw', name:'Northeast Europe & Northwest Asia', group:'Western Afro-Eurasia',
     hex:'#d4982a', enabled:false,
     test(lat, lon) { return lat >= 45 && lon >= 10 && lon < 50; },
     polygons:[[[45,10],[45,50],[90,50],[90,10]]]
