@@ -227,106 +227,21 @@ const CONFIG = {
 // Boundary convention: south/west >=  north/east <  (half-open)
 // ═══════════════════════════════════════════════════════════════
 const PREDEFINED_REGIONS = [
-  // ── PRIMARY REFUGIA ──
+  // ── AMERICAS ──
   {
-    id: 'americas', name: 'Americas', group: 'Primary Refugia',
-    hex: '#3b7dd8', enabled: true,
-    test(lat, lon) {
-      const eastLim = lat >= 67 ? -10 : -32;
-      if (lon >= eastLim) return false;
-      if (lat > 60 && lon < -168) return false;          // Siberian excl → NE Asia
-      if (lon < -130 && lat >= 0 && lat < 25) return false; // N Polynesia
-      if (lon < -100 && lat < 0) return false;               // S Polynesia
-      return true;
-    },
-    polygons: [
-      [[-90,-100],[-90,-32],[0,-32],[0,-100]],
-      [[0,-130],[0,-32],[12.5,-32],[12.5,-130]],
-      [[12.5,-130],[12.5,-32],[25,-32],[25,-130]],
-      [[25,-180],[25,-32],[60,-32],[60,-180]],
-      [[60,-168],[60,-32],[67,-32],[67,-168]],
-      [[67,-168],[67,-10],[85,-10],[85,-168]]
-    ]
+    id:'se_south_america', name:'SE South America', group:'Americas',
+    hex:'#3b7dd8', enabled:false,
+    test(lat, lon) { return lat < -15 && lon >= -65 && lon < -32; },
+    polygons:[[[-90,-65],[-90,-32],[-15,-32],[-15,-65]]]
   },
   {
-    id: 'sahul', name: 'Sahul', group: 'Primary Refugia',
-    hex: '#2ea87e', enabled: true,
-    test(lat, lon) {
-      if (lat >= 3 || lon < 110) return false;
-      if (lat >= -11) return lon >= 125 && lon < 150;
-      if (lat >= -20) return lon < 150;
-      return lon < 155;
-    },
-    polygons: [
-      [[-11,125],[-11,150],[3,150],[3,125]],
-      [[-20,110],[-20,150],[-11,150],[-11,110]],
-      [[-90,110],[-90,155],[-20,155],[-20,110]]
-    ]
+    id:'sw_south_america', name:'SW South America', group:'Americas',
+    hex:'#3b7dd8', enabled:false,
+    test(lat, lon) { return lat < -15 && lon >= -100 && lon < -65; },
+    polygons:[[[-90,-100],[-90,-65],[-15,-65],[-15,-100]]]
   },
   {
-    id: 'caucasus', name: 'Caucasus', group: 'Primary Refugia',
-    hex: '#d4982a', enabled: true,
-    test(lat, lon) { return lat >= 37 && lat < 45 && lon >= 37 && lon < 50; },
-    polygons: [[[37,37],[37,50],[45,50],[45,37]]]
-  },
-
-  // ── SUPPLEMENTAL: OCEANIA ──
-  {
-    id: 'polynesia', name: 'Polynesia', group: 'Supplemental: Oceania',
-    hex: '#2ea87e', enabled: false,
-    test(lat, lon) {
-      // Micronesia: 3-20°N, 130-180°E
-      if (lat >= 3 && lat < 20 && lon >= 130 && lon <= 180) return true;
-      // Remote Melanesia: two bands
-      if (lat >= -20 && lat < 3 && lon >= 150 && lon <= 180) return true;
-      if (lat < -20 && lon >= 155 && lon <= 180) return true;
-      // N Polynesia: 0-25°N, west of -130
-      if (lat >= 0 && lat < 25 && lon < -130 && lon >= -180) return true;
-      // S Polynesia: below 0°N, west of -100
-      if (lat < 0 && lon < -100 && lon >= -180) return true;
-      return false;
-    },
-    polygons: [
-      [[3,130],[3,180],[20,180],[20,130]],
-      [[-20,150],[-20,180],[3,180],[3,150]],
-      [[-90,155],[-90,180],[-20,180],[-20,155]],
-      [[0,-180],[0,-130],[25,-130],[25,-180]],
-      [[-90,-180],[-90,-100],[0,-100],[0,-180]]
-    ]
-  },
-  {
-    id:'sahul_s', name:'Southern Sahul (Southern Australia)', group:'Supplemental: Oceania',
-    hex:'#2ea87e', enabled:false,
-    test(lat, lon) {
-      if (lat >= -20 || lon < 110) return false;
-      return lon < 155;
-    },
-    polygons:[[[-90,110],[-90,155],[-20,155],[-20,110]]]
-  },
-  {
-    id:'sahul_c', name:'Central Sahul (Northern Australia)', group:'Supplemental: Oceania',
-    hex:'#2ea87e', enabled:false,
-    test(lat, lon) {
-      return lat >= -20 && lat < -11 && lon >= 110 && lon < 150;
-    },
-    polygons:[[[-20,110],[-20,150],[-11,150],[-11,110]]]
-  },
-  {
-    id:'sahul_n', name:'Eastern Wallacea & Northern Sahul', group:'Supplemental: Oceania',
-    hex:'#2ea87e', enabled:false,
-    test(lat, lon) { return lat >= -11 && lat < 3 && lon >= 125 && lon < 150; },
-    polygons:[[[-11,125],[-11,150],[3,150],[3,125]]]
-  },
-  {
-    id:'wallacea', name:'Western Wallacea & Southeast Sundaland', group:'Supplemental: Oceania',
-    hex:'#2ea87e', enabled:false,
-    test(lat, lon) { return lat >= -11 && lat < 3 && lon >= 110 && lon < 125; },
-    polygons:[[[-11,110],[-11,125],[3,125],[3,110]]]
-  },
-
-  // ── SUPPLEMENTAL: AMERICAS ──
-  {
-    id:'nw_south_america', name:'NW South America', group:'Supplemental: Americas',
+    id:'nw_south_america', name:'NW South America', group:'Americas',
     hex:'#3b7dd8', enabled:false,
     test(lat, lon) {
       if (lat < -15 || lon >= -65) return false;
@@ -338,7 +253,7 @@ const PREDEFINED_REGIONS = [
     polygons:[[[-15,-100],[-15,-65],[0,-65],[0,-100]],[[0,-130],[0,-65],[7,-65],[7,-130]],[[7,-77.5],[7,-65],[12.5,-65],[12.5,-77.5]]]
   },
   {
-    id:'ne_south_america', name:'NE South America', group:'Supplemental: Americas',
+    id:'ne_south_america', name:'NE South America', group:'Americas',
     hex:'#3b7dd8', enabled:false,
     test(lat, lon) {
       if (lon < -65 || lon >= -32) return false;
@@ -351,19 +266,17 @@ const PREDEFINED_REGIONS = [
     polygons:[[[-15,-65],[-15,-32],[0,-32],[0,-65]],[[0,-65],[0,-32],[7,-32],[7,-65]],[[7,-65],[7,-32],[12.5,-32],[12.5,-65]]]
   },
   {
-    id:'sw_south_america', name:'SW South America', group:'Supplemental: Americas',
+    id:'central_america_antilles', name:'Central America & Antilles', group:'Americas',
     hex:'#3b7dd8', enabled:false,
-    test(lat, lon) { return lat < -15 && lon >= -100 && lon < -65; },
-    polygons:[[[-90,-100],[-90,-65],[-15,-65],[-15,-100]]]
+    test(lat, lon) {
+      if (lat < 7 || lat >= 25) return false;
+      if (lat >= 12.5) return lon >= -130 && lon < -32;
+      return lon >= -130 && lon < -77.5;
+    },
+    polygons:[[[7,-130],[7,-77.5],[25,-77.5],[25,-130]],[[12.5,-77.5],[12.5,-32],[25,-32],[25,-77.5]]]
   },
   {
-    id:'se_south_america', name:'SE South America', group:'Supplemental: Americas',
-    hex:'#3b7dd8', enabled:false,
-    test(lat, lon) { return lat < -15 && lon >= -65 && lon < -32; },
-    polygons:[[[-90,-65],[-90,-32],[-15,-32],[-15,-65]]]
-  },
-  {
-    id:'nw_namerica', name:'NW North America', group:'Supplemental: Americas',
+    id:'nw_namerica', name:'NW North America', group:'Americas',
     hex:'#3b7dd8', enabled:false,
     test(lat, lon) {
       if (lon >= -100) return false;
@@ -373,7 +286,7 @@ const PREDEFINED_REGIONS = [
     polygons:[[[40,-180],[40,-100],[60,-100],[60,-180]],[[60,-168],[60,-100],[85,-100],[85,-168]]]
   },
   {
-    id:'ne_namerica', name:'NE North America', group:'Supplemental: Americas',
+    id:'ne_namerica', name:'NE North America', group:'Americas',
     hex:'#3b7dd8', enabled:false,
     test(lat, lon) {
       if (lon < -100) return false;
@@ -383,62 +296,33 @@ const PREDEFINED_REGIONS = [
     polygons:[[[40,-100],[40,-32],[67,-32],[67,-10],[85,-10],[85,-100]]]
   },
   {
-    id:'sw_namerica', name:'SW North America', group:'Supplemental: Americas',
+    id:'sw_namerica', name:'SW North America', group:'Americas',
     hex:'#3b7dd8', enabled:false,
     test(lat, lon) { return lat >= 25 && lat < 40 && lon >= -180 && lon < -100; },
     polygons:[[[25,-180],[25,-100],[40,-100],[40,-180]]]
   },
   {
-    id:'se_namerica', name:'SE North America', group:'Supplemental: Americas',
+    id:'se_namerica', name:'SE North America', group:'Americas',
     hex:'#3b7dd8', enabled:false,
     test(lat, lon) { return lat >= 25 && lat < 40 && lon >= -100 && lon < -32; },
     polygons:[[[25,-100],[25,-32],[40,-32],[40,-100]]]
   },
-  {
-    id:'central_america_antilles', name:'Central America & Antilles', group:'Supplemental: Americas',
-    hex:'#3b7dd8', enabled:false,
-    test(lat, lon) {
-      if (lat < 7 || lat >= 25) return false;
-      if (lat >= 12.5) return lon >= -130 && lon < -32;
-      return lon >= -130 && lon < -77.5;
-    },
-    polygons:[[[7,-130],[7,-77.5],[25,-77.5],[25,-130]],[[12.5,-77.5],[12.5,-32],[25,-32],[25,-77.5]]]
-  },
 
-  // ── SUPPLEMENTAL: WESTERN AFRO-EURASIA (Africa + Europe) ──
+  // ── WESTERN AFRO-EURASIA ──
   {
-    id:'sahara', name:'Sahara', group:'Supplemental: Western Afro-Eurasia',
+    id:'sahara', name:'Sahara', group:'Western Afro-Eurasia',
     hex:'#c44444', enabled:false,
     test(lat, lon) { return lat >= 15 && lat < 30 && lon >= -32 && lon < 30; },
     polygons:[[[15,-32],[15,30],[30,30],[30,-32]]]
   },
   {
-    id:'mediterranean', name:'Mediterranean', group:'Supplemental: Western Afro-Eurasia',
-    hex:'#c44444', enabled:false,
-    test(lat, lon) {
-      if (lat < 30 || lat >= 45 || lon < -32) return false;
-      return lon < (lat >= 37 ? 37 : 30);
-    },
-    polygons:[[[30,-32],[30,30],[37,30],[37,-32]],[[37,-32],[37,37],[45,37],[45,-32]]]
-  },
-  {
-    id:'europe_nw', name:'Northwest Europe', group:'Supplemental: Western Afro-Eurasia',
-    hex:'#c44444', enabled:false,
-    test(lat, lon) {
-      if (lon >= 10) return false;
-      if (lat >= 67) return lon >= -10;
-      return lat >= 45 && lon >= -32;
-    },
-    polygons:[[[45,-32],[45,10],[67,10],[67,-32]],[[67,-10],[67,10],[90,10],[90,-10]]]
-  },
-  {
-    id:'west_africa', name:'West Africa', group:'Supplemental: Western Afro-Eurasia',
+    id:'west_africa', name:'West Africa', group:'Western Afro-Eurasia',
     hex:'#c44444', enabled:false,
     test(lat, lon) { return lat >= 0 && lat < 15 && lon >= -32 && lon < 15; },
     polygons:[[[0,-32],[0,15],[15,15],[15,-32]]]
   },
   {
-    id:'central_africa', name:'Central Africa', group:'Supplemental: Western Afro-Eurasia',
+    id:'central_africa', name:'Central Africa', group:'Western Afro-Eurasia',
     hex:'#c44444', enabled:false,
     test(lat, lon) {
       if (lat >= 0 && lat < 15 && lon >= 15 && lon < 30) return true;
@@ -448,19 +332,13 @@ const PREDEFINED_REGIONS = [
     polygons:[[[0,15],[0,30],[15,30],[15,15]],[[-15,-32],[-15,30],[0,30],[0,-32]]]
   },
   {
-    id:'south_africa', name:'South Africa', group:'Supplemental: Western Afro-Eurasia',
-    hex:'#c44444', enabled:false,
-    test(lat, lon) { return lat < -15 && lon >= -32 && lon < 41; },
-    polygons:[[[-90,-32],[-90,41],[-15,41],[-15,-32]]]
-  },
-  {
-    id:'rift_valley', name:'Rift Valley & Great Lakes', group:'Supplemental: Western Afro-Eurasia',
+    id:'rift_valley', name:'Rift Valley & Great Lakes', group:'Western Afro-Eurasia',
     hex:'#c44444', enabled:false,
     test(lat, lon) { return lat >= -15 && lat < 12.5 && lon >= 30 && lon < 37; },
     polygons:[[[-15,30],[-15,37],[12.5,37],[12.5,30]]]
   },
   {
-    id:'east_africa', name:'East Africa', group:'Supplemental: Western Afro-Eurasia',
+    id:'east_africa', name:'East Africa', group:'Western Afro-Eurasia',
     hex:'#c44444', enabled:false,
     test(lat, lon) {
       if (lat >= -15) return lat < 12.5 && lon >= 37 && lon < 60;
@@ -468,76 +346,149 @@ const PREDEFINED_REGIONS = [
     },
     polygons:[[[-15,37],[-15,60],[12.5,60],[12.5,37]],[[-90,41],[-90,60],[-15,60],[-15,41]]]
   },
-
-  // ── SUPPLEMENTAL: EASTERN AFRO-EURASIA (merged Caucasus + Asia) ──
-    {
-    id:'asia_nw', name:'Northeast Europe & Northwest Asia', group:'Supplemental: Eastern Afro-Eurasia',
-    hex:'#d4982a', enabled:false,
-    test(lat, lon) { return lat >= 45 && lon >= 10 && lon < 50; },
-    polygons:[[[45,10],[45,50],[90,50],[90,10]]]
+  {
+    id:'south_africa', name:'South Africa', group:'Western Afro-Eurasia',
+    hex:'#c44444', enabled:false,
+    test(lat, lon) { return lat < -15 && lon >= -32 && lon < 41; },
+    polygons:[[[-90,-32],[-90,41],[-15,41],[-15,-32]]]
   },
   {
-    id:'caucasus_nw', name:'Northwest Caucasus', group:'Supplemental: Eastern Afro-Eurasia',
+    id:'mediterranean', name:'Mediterranean', group:'Western Afro-Eurasia',
+    hex:'#c44444', enabled:false,
+    test(lat, lon) {
+      if (lat < 30 || lat >= 45 || lon < -32) return false;
+      return lon < (lat >= 37 ? 37 : 30);
+    },
+    polygons:[[[30,-32],[30,30],[37,30],[37,-32]],[[37,-32],[37,37],[45,37],[45,-32]]]
+  },
+  {
+    id:'europe_nw', name:'Northwest Europe', group:'Western Afro-Eurasia',
+    hex:'#c44444', enabled:false,
+    test(lat, lon) {
+      if (lon >= 10) return false;
+      if (lat >= 67) return lon >= -10;
+      return lat >= 45 && lon >= -32;
+    },
+    polygons:[[[45,-32],[45,10],[67,10],[67,-32]],[[67,-10],[67,10],[90,10],[90,-10]]]
+  },
+  {
+    id:'levant', name:'Levant & Red Sea', group:'Western Afro-Eurasia',
+    hex:'#c44444', enabled:false,
+    test(lat, lon) { return lat >= 12.5 && lat < 37 && lon >= 30 && lon < 45; },
+    polygons:[[[12.5,30],[12.5,45],[37,45],[37,30]]]
+  },
+
+  // ── EASTERN AFRO-EURASIA ──
+  {
+    id:'caucasus_nw', name:'Northwest Caucasus', group:'Eastern Afro-Eurasia',
     hex:'#d4982a', enabled:false,
     test(lat, lon) { return lat >= 42.5 && lat < 45 && lon >= 37 && lon < 44.5; },
     polygons:[[[42.5,37],[42.5,44.5],[45,44.5],[45,37]]]
   },
   {
-    id:'caucasus_ne', name:'Northeast Caucasus', group:'Supplemental: Eastern Afro-Eurasia',
+    id:'caucasus_ne', name:'Northeast Caucasus', group:'Eastern Afro-Eurasia',
     hex:'#d4982a', enabled:false,
     test(lat, lon) { return lat >= 42.5 && lat < 45 && lon >= 44.5 && lon < 50; },
     polygons:[[[42.5,44.5],[42.5,50],[45,50],[45,44.5]]]
   },
   {
-    id:'caucasus_sw', name:'Southwest Caucasus', group:'Supplemental: Eastern Afro-Eurasia',
+    id:'caucasus_sw', name:'Southwest Caucasus', group:'Eastern Afro-Eurasia',
     hex:'#d4982a', enabled:false,
     test(lat, lon) { return lat >= 37 && lat < 42.5 && lon >= 37 && lon < 44.5; },
     polygons:[[[37,37],[37,44.5],[42.5,44.5],[42.5,37]]]
   },
   {
-    id:'caucasus_se', name:'Southeast Caucasus', group:'Supplemental: Eastern Afro-Eurasia',
+    id:'caucasus_se', name:'Southeast Caucasus', group:'Eastern Afro-Eurasia',
     hex:'#d4982a', enabled:false,
     test(lat, lon) { return lat >= 37 && lat < 42.5 && lon >= 44.5 && lon < 50; },
     polygons:[[[37,44.5],[37,50],[42.5,50],[42.5,44.5]]]
   },
   {
-    id:'levant', name:'Levant & Red Sea', group:'Supplemental: Western Afro-Eurasia',
-    hex:'#c44444', enabled:false,
-    test(lat, lon) { return lat >= 12.5 && lat < 37 && lon >= 30 && lon < 45; },
-    polygons:[[[12.5,30],[12.5,45],[37,45],[37,30]]]
+    id:'sahul_s', name:'Southern Sahul (Southern Australia)', group:'Eastern Afro-Eurasia',
+    hex:'#2ea87e', enabled:false,
+    test(lat, lon) {
+      if (lat >= -20 || lon < 110) return false;
+      return lon < 155;
+    },
+    polygons:[[[-90,110],[-90,155],[-20,155],[-20,110]]]
   },
   {
-    id:'asia_sw', name:'Southwest Asia', group:'Supplemental: Eastern Afro-Eurasia',
+    id:'sahul_c', name:'Central Sahul (Northern Australia)', group:'Eastern Afro-Eurasia',
+    hex:'#2ea87e', enabled:false,
+    test(lat, lon) {
+      return lat >= -20 && lat < -11 && lon >= 110 && lon < 150;
+    },
+    polygons:[[[-20,110],[-20,150],[-11,150],[-11,110]]]
+  },
+  {
+    id:'sahul_n', name:'Eastern Wallacea & Northern Sahul', group:'Eastern Afro-Eurasia',
+    hex:'#2ea87e', enabled:false,
+    test(lat, lon) { return lat >= -11 && lat < 3 && lon >= 125 && lon < 150; },
+    polygons:[[[-11,125],[-11,150],[3,150],[3,125]]]
+  },
+  {
+    id:'wallacea', name:'Western Wallacea & Southeast Sundaland', group:'Eastern Afro-Eurasia',
+    hex:'#2ea87e', enabled:false,
+    test(lat, lon) { return lat >= -11 && lat < 3 && lon >= 110 && lon < 125; },
+    polygons:[[[-11,110],[-11,125],[3,125],[3,110]]]
+  },
+  {
+    id:'polynesia', name:'Polynesia', group:'Eastern Afro-Eurasia',
+    hex:'#2ea87e', enabled:false,
+    test(lat, lon) {
+      if (lat >= 3 && lat < 20 && lon >= 130 && lon <= 180) return true;
+      if (lat >= -20 && lat < 3 && lon >= 150 && lon <= 180) return true;
+      if (lat < -20 && lon >= 155 && lon <= 180) return true;
+      if (lat >= 0 && lat < 25 && lon < -130 && lon >= -180) return true;
+      if (lat < 0 && lon < -100 && lon >= -180) return true;
+      return false;
+    },
+    polygons: [
+      [[3,130],[3,180],[20,180],[20,130]],
+      [[-20,150],[-20,180],[3,180],[3,150]],
+      [[-90,155],[-90,180],[-20,180],[-20,155]],
+      [[0,-180],[0,-130],[25,-130],[25,-180]],
+      [[-90,-180],[-90,-100],[0,-100],[0,-180]]
+    ]
+  },
+  {
+    id:'asia_nw', name:'Northeast Europe & Northwest Asia', group:'Eastern Afro-Eurasia',
+    hex:'#d4982a', enabled:false,
+    test(lat, lon) { return lat >= 45 && lon >= 10 && lon < 50; },
+    polygons:[[[45,10],[45,50],[90,50],[90,10]]]
+  },
+  {
+    id:'asia_sw', name:'Southwest Asia', group:'Eastern Afro-Eurasia',
     hex:'#d4982a', enabled:false,
     test(lat, lon) { return lat >= 12.5 && lat < 37 && lon >= 45 && lon < 60; },
     polygons:[[[12.5,45],[12.5,60],[37,60],[37,45]]]
   },
   {
-    id:'asia_south', name:'South Asia', group:'Supplemental: Eastern Afro-Eurasia',
+    id:'asia_south', name:'South Asia', group:'Eastern Afro-Eurasia',
     hex:'#d4982a', enabled:false,
     test(lat, lon) { return lat < 37 && lon >= 60 && lon < 90; },
     polygons:[[[-90,60],[-90,90],[37,90],[37,60]]]
   },
   {
-    id:'asia_se', name:'Southeast Asia', group:'Supplemental: Eastern Afro-Eurasia',
+    id:'asia_se', name:'Southeast Asia', group:'Eastern Afro-Eurasia',
     hex:'#d4982a', enabled:false,
     test(lat, lon) { return lat < 37 && lon >= 90 && lon < 110; },
     polygons:[[[-90,90],[-90,110],[37,110],[37,90]]]
   },
   {
-    id:'phil_china_seas', name:'Philippine & China Seas', group:'Supplemental: Eastern Afro-Eurasia',
+    id:'phil_china_seas', name:'Philippine & China Seas', group:'Eastern Afro-Eurasia',
     hex:'#d4982a', enabled:false,
     test(lat, lon) { return lat >= 3 && lat < 37 && lon >= 110 && lon < 130; },
     polygons:[[[3,110],[3,130],[37,130],[37,110]]]
   },
   {
-    id:'north_central_asia', name:'North & Central Asia', group:'Supplemental: Eastern Afro-Eurasia',
+    id:'north_central_asia', name:'North & Central Asia', group:'Eastern Afro-Eurasia',
     hex:'#d4982a', enabled:false,
     test(lat, lon) { return lat >= 37 && lat < 85 && lon >= 50 && lon < 130; },
     polygons:[[[37,50],[37,130],[85,130],[85,50]]]
   },
   {
-    id:'asia_ne', name:'Northeast Asia (Japan & Eastern Russia)', group:'Supplemental: Eastern Afro-Eurasia',
+    id:'asia_ne', name:'Northeast Asia', group:'Eastern Afro-Eurasia',
     hex:'#d4982a', enabled:false,
     test(lat, lon) {
       if (lat >= 20 && lat < 85 && lon >= 130 && lon <= 180) return true;
@@ -547,6 +498,36 @@ const PREDEFINED_REGIONS = [
     polygons:[[[20,130],[20,180],[85,180],[85,130]],[[60,-180],[60,-168],[85,-168],[85,-180]]]
   }
 ];
+
+// ═══════════════════════════════════════════════════════════════
+// TIER STRUCTURE FOR REFUGIA HYPOTHESIS
+// ═══════════════════════════════════════════════════════════════
+const TIER_STRUCTURE = {
+  'tier1': {
+    name: 'Tier 1: Deepest Refugia',
+    regions: ['se_south_america', 'caucasus_nw', 'sahul_s']
+  },
+  'tier2': {
+    name: 'Tier 2: Secondary Refugia',
+    regions: ['sw_south_america', 'ne_south_america', 'nw_south_america', 
+              'caucasus_se', 'caucasus_ne', 'caucasus_sw',
+              'sahul_c', 'sahul_n']
+  },
+  'tier3': {
+    name: 'Tier 3: Tertiary Refugia',
+    regions: ['central_america_antilles', 'ne_namerica', 'nw_namerica', 'se_namerica', 'sw_namerica',
+              'asia_se', 'phil_china_seas', 'asia_ne', 'wallacea', 'polynesia']
+  },
+  'tier4': {
+    name: 'Tier 4: Africa',
+    regions: ['sahara', 'west_africa', 'central_africa', 'rift_valley', 'east_africa', 'south_africa']
+  },
+  'tier5': {
+    name: 'Tier 5: Non-Refugia',
+    regions: ['mediterranean', 'europe_nw', 'asia_nw', 'levant', 'asia_sw', 'asia_south', 'north_central_asia']
+  }
+};
+
 // ═══════════════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════════════
@@ -1122,87 +1103,229 @@ const UI = {
     const container = document.getElementById('regionToggles');
     container.innerHTML = '';
     const chapter = State.currentChapter ? State.loadedChapters[State.currentChapter] : null;
-    const groups = new Map();
-    [...State.regions, ...State.customRegions].forEach(r => {
-      const g = r.group || 'Other';
-      if (!groups.has(g)) groups.set(g, []);
-      groups.get(g).push(r);
-    });
-
+    
     // Track collapsed state across re-renders
     if (!State._collapsedGroups) State._collapsedGroups = new Set();
 
-    for (const [groupName, regionList] of groups) {
-      const isSupp = groupName.startsWith('Supplemental:');
-      const shortName = isSupp ? groupName.replace('Supplemental: ', '') : groupName;
-      const groupKey = groupName.replace(/[^a-zA-Z]/g, '_');
-      const isCollapsed = isSupp && !State._collapsedGroups.has(groupKey + '_open');
+    // ═══════════════════════════════════════════════════════════════
+    // TIER-BASED VIEW (Refugia Hypothesis)
+    // ═══════════════════════════════════════════════════════════════
+    const tierHeader = document.createElement('div');
+    tierHeader.style.cssText = 'font-weight:700;font-size:12px;padding:8px 0 4px;color:var(--text);border-bottom:2px solid var(--card-border);margin-bottom:4px;';
+    tierHeader.textContent = 'REFUGIA TIERS';
+    container.appendChild(tierHeader);
 
-      if (isSupp) {
-        // Collapsible header
-        const header = document.createElement('div');
-        header.className = 'rg-header';
+    for (const [tierKey, tierData] of Object.entries(TIER_STRUCTURE)) {
+      const isCollapsed = State._collapsedGroups.has(tierKey);
+      const tierRegions = State.regions.filter(r => tierData.regions.includes(r.id));
 
-        const arrow = document.createElement('span');
-        arrow.className = 'rg-arrow';
-        arrow.textContent = isCollapsed ? '▶' : '▼';
+      // Tier header with collapse arrow and all/none controls
+      const header = document.createElement('div');
+      header.className = 'rg-header';
 
-        const title = document.createElement('span');
-        title.textContent = shortName;
+      const arrow = document.createElement('span');
+      arrow.className = 'rg-arrow';
+      arrow.textContent = isCollapsed ? '▶' : '▼';
 
-        const controls = document.createElement('span');
-        controls.className = 'rg-controls';
+      const title = document.createElement('span');
+      title.textContent = tierData.name;
 
-        const allLink = document.createElement('a');
-        allLink.href = '#';
-        allLink.textContent = 'all';
-        allLink.onclick = (e) => {
-          e.preventDefault(); e.stopPropagation();
-          regionList.forEach(r => { r.enabled = true; MapManager.setRegionVisible(r.id, true); });
-          if (chapter) { MapManager.renderLanguages(chapter); App.updateAnalysis(); }
-          UI.renderRegionToggles();
-        };
+      const controls = document.createElement('span');
+      controls.className = 'rg-controls';
 
-        const sep = document.createTextNode(' · ');
+      const allLink = document.createElement('a');
+      allLink.href = '#';
+      allLink.textContent = 'all';
+      allLink.onclick = (e) => {
+        e.preventDefault(); e.stopPropagation();
+        tierRegions.forEach(r => { r.enabled = true; MapManager.setRegionVisible(r.id, true); });
+        if (chapter) { MapManager.renderLanguages(chapter); App.updateAnalysis(); }
+        UI.renderRegionToggles();
+      };
 
-        const noneLink = document.createElement('a');
-        noneLink.href = '#';
-        noneLink.textContent = 'none';
-        noneLink.onclick = (e) => {
-          e.preventDefault(); e.stopPropagation();
-          regionList.forEach(r => { r.enabled = false; MapManager.setRegionVisible(r.id, false); });
-          if (chapter) { MapManager.renderLanguages(chapter); App.updateAnalysis(); }
-          UI.renderRegionToggles();
-        };
+      const sep = document.createTextNode(' · ');
 
-        controls.appendChild(allLink);
-        controls.appendChild(sep);
-        controls.appendChild(noneLink);
+      const noneLink = document.createElement('a');
+      noneLink.href = '#';
+      noneLink.textContent = 'none';
+      noneLink.onclick = (e) => {
+        e.preventDefault(); e.stopPropagation();
+        tierRegions.forEach(r => { r.enabled = false; MapManager.setRegionVisible(r.id, false); });
+        if (chapter) { MapManager.renderLanguages(chapter); App.updateAnalysis(); }
+        UI.renderRegionToggles();
+      };
 
-        header.appendChild(arrow);
-        header.appendChild(title);
-        header.appendChild(controls);
+      controls.appendChild(allLink);
+      controls.appendChild(sep);
+      controls.appendChild(noneLink);
 
-        const body = document.createElement('div');
-        body.className = 'rg-body' + (isCollapsed ? ' rg-collapsed' : '');
+      header.appendChild(arrow);
+      header.appendChild(title);
+      header.appendChild(controls);
 
-        header.addEventListener('click', () => {
-          const nowOpen = body.classList.toggle('rg-collapsed');
-          arrow.textContent = nowOpen ? '▶' : '▼';
-          if (nowOpen) State._collapsedGroups.delete(groupKey + '_open');
-          else State._collapsedGroups.add(groupKey + '_open');
-        });
+      const body = document.createElement('div');
+      body.className = 'rg-body' + (isCollapsed ? ' rg-collapsed' : '');
 
-        container.appendChild(header);
-        regionList.forEach(r => body.appendChild(UI._mkToggle(r, chapter)));
-        container.appendChild(body);
-      } else {
-        const label = document.createElement('div');
-        label.className = 'region-group-label';
-        label.textContent = groupName;
-        container.appendChild(label);
-        regionList.forEach(r => container.appendChild(UI._mkToggle(r, chapter)));
-      }
+      header.addEventListener('click', (e) => {
+        // Don't toggle if clicking on all/none links
+        if (e.target.tagName === 'A') return;
+        const nowCollapsed = body.classList.toggle('rg-collapsed');
+        arrow.textContent = nowCollapsed ? '▶' : '▼';
+        if (nowCollapsed) State._collapsedGroups.add(tierKey);
+        else State._collapsedGroups.delete(tierKey);
+      });
+
+      container.appendChild(header);
+      tierRegions.forEach(r => body.appendChild(UI._mkToggle(r, chapter)));
+      container.appendChild(body);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // GEOGRAPHIC VIEW (Traditional grouping)
+    // ═══════════════════════════════════════════════════════════════
+    const geoSpacer = document.createElement('div');
+    geoSpacer.style.cssText = 'height:16px;border-top:2px solid var(--card-border);margin:12px 0 8px;';
+    container.appendChild(geoSpacer);
+
+    const geoHeader = document.createElement('div');
+    geoHeader.style.cssText = 'font-weight:700;font-size:12px;padding:8px 0 4px;color:var(--text);border-bottom:2px solid var(--card-border);margin-bottom:4px;';
+    geoHeader.textContent = 'GEOGRAPHIC REGIONS';
+    container.appendChild(geoHeader);
+
+    // Group regions by their geographic group
+    const geoGroups = new Map();
+    State.regions.forEach(r => {
+      const g = r.group || 'Other';
+      if (!geoGroups.has(g)) geoGroups.set(g, []);
+      geoGroups.get(g).push(r);
+    });
+
+    // Render each geographic group
+    for (const [groupName, regionList] of geoGroups) {
+      const groupKey = 'geo_' + groupName.replace(/[^a-zA-Z]/g, '_');
+      const isCollapsed = State._collapsedGroups.has(groupKey);
+
+      const header = document.createElement('div');
+      header.className = 'rg-header';
+
+      const arrow = document.createElement('span');
+      arrow.className = 'rg-arrow';
+      arrow.textContent = isCollapsed ? '▶' : '▼';
+
+      const title = document.createElement('span');
+      title.textContent = groupName;
+
+      const controls = document.createElement('span');
+      controls.className = 'rg-controls';
+
+      const allLink = document.createElement('a');
+      allLink.href = '#';
+      allLink.textContent = 'all';
+      allLink.onclick = (e) => {
+        e.preventDefault(); e.stopPropagation();
+        regionList.forEach(r => { r.enabled = true; MapManager.setRegionVisible(r.id, true); });
+        if (chapter) { MapManager.renderLanguages(chapter); App.updateAnalysis(); }
+        UI.renderRegionToggles();
+      };
+
+      const sep = document.createTextNode(' · ');
+
+      const noneLink = document.createElement('a');
+      noneLink.href = '#';
+      noneLink.textContent = 'none';
+      noneLink.onclick = (e) => {
+        e.preventDefault(); e.stopPropagation();
+        regionList.forEach(r => { r.enabled = false; MapManager.setRegionVisible(r.id, false); });
+        if (chapter) { MapManager.renderLanguages(chapter); App.updateAnalysis(); }
+        UI.renderRegionToggles();
+      };
+
+      controls.appendChild(allLink);
+      controls.appendChild(sep);
+      controls.appendChild(noneLink);
+
+      header.appendChild(arrow);
+      header.appendChild(title);
+      header.appendChild(controls);
+
+      const body = document.createElement('div');
+      body.className = 'rg-body' + (isCollapsed ? ' rg-collapsed' : '');
+
+      header.addEventListener('click', (e) => {
+        if (e.target.tagName === 'A') return;
+        const nowCollapsed = body.classList.toggle('rg-collapsed');
+        arrow.textContent = nowCollapsed ? '▶' : '▼';
+        if (nowCollapsed) State._collapsedGroups.add(groupKey);
+        else State._collapsedGroups.delete(groupKey);
+      });
+
+      container.appendChild(header);
+      regionList.forEach(r => body.appendChild(UI._mkToggle(r, chapter)));
+      container.appendChild(body);
+    }
+
+    // Custom regions section (if any)
+    if (State.customRegions.length > 0) {
+      const customKey = 'geo_Custom';
+      const isCollapsed = State._collapsedGroups.has(customKey);
+
+      const header = document.createElement('div');
+      header.className = 'rg-header';
+
+      const arrow = document.createElement('span');
+      arrow.className = 'rg-arrow';
+      arrow.textContent = isCollapsed ? '▶' : '▼';
+
+      const title = document.createElement('span');
+      title.textContent = 'Custom Regions';
+
+      const controls = document.createElement('span');
+      controls.className = 'rg-controls';
+
+      const allLink = document.createElement('a');
+      allLink.href = '#';
+      allLink.textContent = 'all';
+      allLink.onclick = (e) => {
+        e.preventDefault(); e.stopPropagation();
+        State.customRegions.forEach(r => { r.enabled = true; MapManager.setRegionVisible(r.id, true); });
+        if (chapter) { MapManager.renderLanguages(chapter); App.updateAnalysis(); }
+        UI.renderRegionToggles();
+      };
+
+      const sep = document.createTextNode(' · ');
+
+      const noneLink = document.createElement('a');
+      noneLink.href = '#';
+      noneLink.textContent = 'none';
+      noneLink.onclick = (e) => {
+        e.preventDefault(); e.stopPropagation();
+        State.customRegions.forEach(r => { r.enabled = false; MapManager.setRegionVisible(r.id, false); });
+        if (chapter) { MapManager.renderLanguages(chapter); App.updateAnalysis(); }
+        UI.renderRegionToggles();
+      };
+
+      controls.appendChild(allLink);
+      controls.appendChild(sep);
+      controls.appendChild(noneLink);
+
+      header.appendChild(arrow);
+      header.appendChild(title);
+      header.appendChild(controls);
+
+      const body = document.createElement('div');
+      body.className = 'rg-body' + (isCollapsed ? ' rg-collapsed' : '');
+
+      header.addEventListener('click', (e) => {
+        if (e.target.tagName === 'A') return;
+        const nowCollapsed = body.classList.toggle('rg-collapsed');
+        arrow.textContent = nowCollapsed ? '▶' : '▼';
+        if (nowCollapsed) State._collapsedGroups.add(customKey);
+        else State._collapsedGroups.delete(customKey);
+      });
+
+      container.appendChild(header);
+      State.customRegions.forEach(r => body.appendChild(UI._mkToggle(r, chapter)));
+      container.appendChild(body);
     }
   },
 
