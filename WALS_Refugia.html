@@ -1431,8 +1431,7 @@ const UI = {
     const el = document.getElementById('enrichmentResults');
     if (!result || !chapter) { el.innerHTML = '<div class="empty-state"><p>Upload and select a chapter.</p></div>'; return; }
     const bp = (result.baseline * 100).toFixed(1);
-    const hasRegions = result.enabledRegions && result.enabledRegions.length > 0;
-    const showBreakdown = hasRegions && document.getElementById('cbBreakdown')?.checked;
+    const showBreakdown = document.getElementById('cbBreakdown')?.checked ?? true; // Default to checked
 
     // Build header
     let html = `<div class="enrichment-controls">
@@ -1440,21 +1439,13 @@ const UI = {
         <input type="checkbox" id="cbBreakdown" ${showBreakdown?'checked':''} onchange="App.updateAnalysis()" style="accent-color:var(--accent)"> Region breakdown
       </label>
     </div>`;
+    
+    // Main enrichment table
     html += `<table class="stats-table">
-      <tr><th>Feature Value</th><th class="num">N</th><th class="num">Ref</th><th class="num">%</th><th class="num">E×</th>`;
-    if (showBreakdown) result.enabledRegions.forEach(r => {
-      const short = r.name.replace(/North America/g,'NA').replace(/South America/g,'SA').replace(/ \/ Ethiopian Highlands/g,'');
-      html += `<th class="num region-col" title="${r.name}">${short.length > 8 ? short.substring(0,7)+'…' : short}</th>`;
-    });
-    html += `<th class="num" style="width:20px"></th></tr>`;
+      <tr><th>Feature Value</th><th class="num">N</th><th class="num">Ref</th><th class="num">%</th><th class="num">E×</th><th class="num" style="width:20px"></th></tr>`;
 
     // Baseline row
-    html += `<tr class="baseline"><td><em>Baseline</em></td><td class="num">${result.total}</td><td class="num">${result.totalInRefugia}</td><td class="num">${bp}%</td><td class="num">1.00×</td>`;
-    if (showBreakdown && result.baselineByRegion) result.enabledRegions.forEach(r => {
-      const rc = result.baselineByRegion[r.id];
-      html += `<td class="num region-col" title="${r.name}: ${rc?rc.count:0}/${result.total}">${rc?rc.count:0}</td>`;
-    });
-    html += `<td></td></tr>`;
+    html += `<tr class="baseline"><td><em>Baseline</em></td><td class="num">${result.total}</td><td class="num">${result.totalInRefugia}</td><td class="num">${bp}%</td><td class="num">1.00×</td><td></td></tr>`;
 
     // Feature value rows with checkboxes for composite
     const keys = chapter.codeOrder.length ? chapter.codeOrder : Object.keys(result.byValue);
@@ -1462,14 +1453,7 @@ const UI = {
       const v = result.byValue[code]; if (!v) return;
       const pct = (v.pct * 100).toFixed(1), enr = v.enrichment.toFixed(2);
       const cls = v.enrichment > 1.1 ? 'enriched' : (v.enrichment < 0.9 ? 'depleted' : 'neutral-val');
-      html += `<tr><td><label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" class="composite-cb" data-code="${code}" style="accent-color:var(--accent);width:12px;height:12px">${v.label}</label></td><td class="num">${v.total}</td><td class="num">${v.inRefugia}</td><td class="num">${pct}%</td><td class="num ${cls}">${enr}×</td>`;
-      if (showBreakdown) result.enabledRegions.forEach(r => {
-        const rc = v.byRegion[r.id];
-        const cnt = rc ? rc.count : 0;
-        const pctOfVal = v.total > 0 ? ((cnt/v.total)*100).toFixed(0) : '0';
-        html += `<td class="num region-col" title="${r.name}: ${cnt}/${v.total} (${pctOfVal}%)">${cnt}</td>`;
-      });
-      html += `<td></td></tr>`;
+      html += `<tr><td><label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" class="composite-cb" data-code="${code}" style="accent-color:var(--accent);width:12px;height:12px">${v.label}</label></td><td class="num">${v.total}</td><td class="num">${v.inRefugia}</td><td class="num">${pct}%</td><td class="num ${cls}">${enr}×</td><td></td></tr>`;
     });
 
     // Composite rows
@@ -1477,17 +1461,151 @@ const UI = {
       const comp = Stats.computeCompositeRow(chapter.languages, cr.codes, result.baseline);
       const pct = (comp.pct * 100).toFixed(1), enr = comp.enrichment.toFixed(2);
       const cls = comp.enrichment > 1.1 ? 'enriched' : (comp.enrichment < 0.9 ? 'depleted' : 'neutral-val');
-      html += `<tr class="composite-row"><td title="${[...cr.codes].map(c => chapter.codes[c]||c).join(' + ')}"><em>${cr.name}</em></td><td class="num">${comp.total}</td><td class="num">${comp.inRefugia}</td><td class="num">${pct}%</td><td class="num ${cls}">${enr}×</td>`;
-      if (showBreakdown) result.enabledRegions.forEach(r => {
-        const rc = comp.byRegion[r.id];
-        html += `<td class="num region-col">${rc?rc.count:0}</td>`;
-      });
-      html += `<td><button class="btn-x" onclick="State.compositeRows.splice(${idx},1);App.updateAnalysis()" title="Remove">×</button></td></tr>`;
+      html += `<tr class="composite-row"><td title="${[...cr.codes].map(c => chapter.codes[c]||c).join(' + ')}"><em>${cr.name}</em></td><td class="num">${comp.total}</td><td class="num">${comp.inRefugia}</td><td class="num">${pct}%</td><td class="num ${cls}">${enr}×</td><td><button class="btn-x" onclick="State.compositeRows.splice(${idx},1);App.updateAnalysis()" title="Remove">×</button></td></tr>`;
     });
 
     html += '</table>';
     html += `<div class="composite-actions"><button class="btn-sm" onclick="App.addCompositeRow()">+ Combine checked values</button> <button class="btn-sm" onclick="App.copyEnrichmentTable()" title="Copy enrichment table as TSV">📋 Copy Table</button> <button class="btn-sm" onclick="App.exportAll()" title="Export all computed results">📋 Export All</button></div>`;
+    
+    // TIER-BASED BREAKDOWN TABLE
+    if (showBreakdown) {
+      html += '<div style="margin-top:16px;padding-top:16px;border-top:2px solid var(--card-border)">';
+      html += '<div style="font-weight:600;font-size:11px;margin-bottom:6px;color:var(--text-muted)">TIER BREAKDOWN</div>';
+      html += UI._buildTierBreakdownTable(result, chapter);
+      html += '</div>';
+    }
+    
     el.innerHTML = html;
+  },
+
+  _buildTierBreakdownTable(result, chapter) {
+    // Build tier-based breakdown
+    const tierBreakdown = {};
+    const keys = chapter.codeOrder.length ? chapter.codeOrder : Object.keys(result.byValue);
+    
+    // Initialize structure
+    for (let tierNum = 1; tierNum <= 5; tierNum++) {
+      tierBreakdown[tierNum] = {
+        name: TIER_STRUCTURE['tier' + tierNum].name,
+        features: {}
+      };
+    }
+    
+    // For each feature value, count by tier and region
+    keys.forEach(code => {
+      const v = result.byValue[code];
+      if (!v) return;
+      
+      // Get all languages with this feature
+      const langsWithFeature = chapter.languages.filter(l => l.value === code);
+      
+      // Group by tier
+      for (let tierNum = 1; tierNum <= 5; tierNum++) {
+        const tierKey = 'tier' + tierNum;
+        const tierRegionIds = TIER_STRUCTURE[tierKey].regions;
+        const tierRegions = State.regions.filter(r => tierRegionIds.includes(r.id));
+        
+        // Count languages in this tier for this feature
+        const regionCounts = {};
+        let tierTotal = 0;
+        
+        langsWithFeature.forEach(lang => {
+          for (const r of tierRegions) {
+            if (r.test(lang.lat, lang.lon)) {
+              if (!regionCounts[r.id]) regionCounts[r.id] = {name: r.name, count: 0};
+              regionCounts[r.id].count++;
+              tierTotal++;
+              break; // Each language only counts once per tier
+            }
+          }
+        });
+        
+        if (tierTotal > 0) {
+          const pct = v.total > 0 ? ((tierTotal / v.total) * 100).toFixed(1) : '0.0';
+          
+          // Sort regions by count (highest first)
+          const sortedRegions = Object.values(regionCounts)
+            .filter(rc => rc.count > 0)
+            .sort((a, b) => b.count - a.count);
+          
+          tierBreakdown[tierNum].features[code] = {
+            label: v.label,
+            count: tierTotal,
+            pct: pct,
+            regions: sortedRegions
+          };
+        }
+      }
+    });
+    
+    // Also do composite rows
+    State.compositeRows.forEach((cr, idx) => {
+      const langsWithFeature = chapter.languages.filter(l => cr.codes.has(l.value));
+      
+      for (let tierNum = 1; tierNum <= 5; tierNum++) {
+        const tierKey = 'tier' + tierNum;
+        const tierRegionIds = TIER_STRUCTURE[tierKey].regions;
+        const tierRegions = State.regions.filter(r => tierRegionIds.includes(r.id));
+        
+        const regionCounts = {};
+        let tierTotal = 0;
+        
+        langsWithFeature.forEach(lang => {
+          for (const r of tierRegions) {
+            if (r.test(lang.lat, lang.lon)) {
+              if (!regionCounts[r.id]) regionCounts[r.id] = {name: r.name, count: 0};
+              regionCounts[r.id].count++;
+              tierTotal++;
+              break;
+            }
+          }
+        });
+        
+        if (tierTotal > 0) {
+          const totalWithComposite = langsWithFeature.length;
+          const pct = totalWithComposite > 0 ? ((tierTotal / totalWithComposite) * 100).toFixed(1) : '0.0';
+          
+          const sortedRegions = Object.values(regionCounts)
+            .filter(rc => rc.count > 0)
+            .sort((a, b) => b.count - a.count);
+          
+          const compositeKey = 'composite_' + idx;
+          tierBreakdown[tierNum].features[compositeKey] = {
+            label: cr.name + ' (composite)',
+            count: tierTotal,
+            pct: pct,
+            regions: sortedRegions
+          };
+        }
+      }
+    });
+    
+    // Render table
+    let html = '<table class="stats-table">';
+    html += '<tr><th>Tier</th><th>Feature Value</th><th class="num">Count</th><th class="num">% of Feature</th><th>Regions (sorted by count)</th></tr>';
+    
+    for (let tierNum = 1; tierNum <= 5; tierNum++) {
+      const tier = tierBreakdown[tierNum];
+      const featureKeys = Object.keys(tier.features);
+      
+      if (featureKeys.length === 0) continue;
+      
+      featureKeys.forEach((fkey, idx) => {
+        const f = tier.features[fkey];
+        const tierCell = idx === 0 
+          ? `<td rowspan="${featureKeys.length}" style="vertical-align:top;font-weight:600;color:var(--text-muted)">${tier.name}</td>` 
+          : '';
+        
+        const regionList = f.regions.map(r => `${r.name} (${r.count})`).join(', ');
+        const isComposite = fkey.startsWith('composite_');
+        const labelStyle = isComposite ? 'font-style:italic' : '';
+        
+        html += `<tr>${tierCell}<td style="${labelStyle}">${f.label}</td><td class="num">${f.count}</td><td class="num">${f.pct}%</td><td style="font-size:11px">${regionList}</td></tr>`;
+      });
+    }
+    
+    html += '</table>';
+    return html;
   },
 
   renderMoran(results, chapter) {
