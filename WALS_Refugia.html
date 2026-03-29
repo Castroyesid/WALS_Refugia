@@ -674,7 +674,13 @@ const Stats = {
     S1 /= 2;
     let S2 = 0;
     for (let i = 0; i < n; i++) { let ri = 0, ci = 0; for (let j = 0; j < n; j++) { ri += w[i][j]; ci += w[j][i]; } S2 += (ri + ci) ** 2; }
-    const varI = (n * ((n*n - 3*n + 3)*S1 - n*S2 + 3*W*W) - (n*n - n) * (2*n*S1 - n*S2 + 6*W*W)) / ((n-1)*(n-2)*(n-3)*W*W) - EI*EI;
+    // Compute kurtosis (b2) from the data
+    const m2 = den / n;
+    let m4 = 0;
+    for (let i = 0; i < n; i++) m4 += (x[i] - xMean) ** 4;
+    m4 /= n;
+    const b2 = m2 > 0 ? m4 / (m2 * m2) : 0;
+    const varI = (n * ((n*n - 3*n + 3)*S1 - n*S2 + 3*W*W) - b2 * ((n*n - n)*S1 - 2*n*S2 + 6*W*W)) / ((n-1)*(n-2)*(n-3)*W*W) - EI*EI;
     const z = varI > 0 ? (I - EI) / Math.sqrt(varI) : 0;
     return {I: Math.round(I*1000)/1000, z: Math.round(z*100)/100, p: 2*(1-Stats.normalCDF(Math.abs(z)))};
   },
