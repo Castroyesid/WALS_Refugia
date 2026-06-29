@@ -179,7 +179,7 @@ select option { background:#1a1f2e; color:#e8e6df; }
       <div class="section">
         <div class="section-header" onclick="UI.toggleSection('moran')">Spatial Autocorrelation (Moran's I) <span class="arrow" id="arrowMoran">▼</span></div>
         <div class="section-body collapsed" id="bodyMoran">
-          <div id="moranResults"><div class="empty-state"><p>Compute spatial clustering.</p></div></div>
+          <div id="moranResults"><div class="empty-state"><p>Compute spatial clustering. Tip: combine values in Enrichment Analysis to include composite categories.</p></div></div>
           <div class="analysis-actions"><button class="btn-sm btn-primary" id="btnMoran" onclick="App.computeMoran()" disabled>Compute Moran's I</button></div>
         </div>
       </div>
@@ -243,7 +243,7 @@ const PREDEFINED_REGIONS = [
   // ── WESTERN AFRO-EURASIA ──
   {
     id:'europe_nw', name:'Northwest Europe', group:'Western Afro-Eurasia',
-    hex:'#c44444', enabled:false,
+    hex:'#69010e', enabled:false,
     test(lat, lon) {
       if (lon >= 10) return false;
       if (lat >= 67) return lon >= -10;
@@ -253,43 +253,43 @@ const PREDEFINED_REGIONS = [
   },
   {
     id:'asia_nw', name:'Northeast Europe & Northwest Asia', group:'Western Afro-Eurasia',
-    hex:'#c44444', enabled:false,
+    hex:'#69010e', enabled:false,
     test(lat, lon) { return lat >= 45 && lon >= 10 && lon < 50; },
     polygons:[[[45,10],[45,50],[90,50],[90,10]]]
   },
   {
     id:'caucasus_nw', name:'Northwest Caucasus', group:'Western Afro-Eurasia',
-    hex:'#c44444', enabled:false,
+    hex:'#04408d', enabled:false,
     test(lat, lon) { return lat >= 42.5 && lat < 45 && lon >= 37 && lon < 44.5; },
     polygons:[[[42.5,37],[42.5,44.5],[45,44.5],[45,37]]]
   },
   {
     id:'caucasus_ne', name:'Northeast Caucasus', group:'Western Afro-Eurasia',
-    hex:'#c44444', enabled:false,
+    hex:'#5b97e1', enabled:false,
     test(lat, lon) { return lat >= 42.5 && lat < 45 && lon >= 44.5 && lon < 50; },
     polygons:[[[42.5,44.5],[42.5,50],[45,50],[45,44.5]]]
   },
   {
     id:'caucasus_se', name:'Southeast Caucasus', group:'Western Afro-Eurasia',
-    hex:'#c44444', enabled:false,
+    hex:'#5b97e1', enabled:false,
     test(lat, lon) { return lat >= 37 && lat < 42.5 && lon >= 44.5 && lon < 50; },
     polygons:[[[37,44.5],[37,50],[42.5,50],[42.5,44.5]]]
   },  
   {
     id:'caucasus_sw', name:'Southwest Caucasus', group:'Western Afro-Eurasia',
-    hex:'#c44444', enabled:false,
+    hex:'#5b97e1', enabled:false,
     test(lat, lon) { return lat >= 37 && lat < 42.5 && lon >= 37 && lon < 44.5; },
     polygons:[[[37,37],[37,44.5],[42.5,44.5],[42.5,37]]]
   },
   {
     id:'levant', name:'Levant & Red Sea', group:'Western Afro-Eurasia',
-    hex:'#c44444', enabled:false,
+    hex:'#69010e', enabled:false,
     test(lat, lon) { return lat >= 12.5 && lat < 37 && lon >= 30 && lon < 45; },
     polygons:[[[12.5,30],[12.5,45],[37,45],[37,30]]]
   },
   {
     id:'mediterranean', name:'Mediterranean', group:'Western Afro-Eurasia',
-    hex:'#c44444', enabled:false,
+    hex:'#69010e', enabled:false,
     test(lat, lon) {
       if (lat < 30 || lat >= 45 || lon < -32) return false;
       return lon < (lat >= 37 ? 37 : 30);
@@ -298,19 +298,19 @@ const PREDEFINED_REGIONS = [
   },
   {
     id:'sahara', name:'Sahara', group:'Western Afro-Eurasia',
-    hex:'#c44444', enabled:false,
+    hex:'#e89f9f', enabled:false,
     test(lat, lon) { return lat >= 15 && lat < 30 && lon >= -32 && lon < 30; },
     polygons:[[[15,-32],[15,30],[30,30],[30,-32]]]
   },
   {
     id:'west_africa', name:'West Africa', group:'Western Afro-Eurasia',
-    hex:'#c44444', enabled:false,
+    hex:'#e89f9f', enabled:false,
     test(lat, lon) { return lat >= 0 && lat < 15 && lon >= -32 && lon < 15; },
     polygons:[[[0,-32],[0,15],[15,15],[15,-32]]]
   },
   {
     id:'central_africa', name:'Central Africa', group:'Western Afro-Eurasia',
-    hex:'#c44444', enabled:false,
+    hex:'#e89f9f', enabled:false,
     test(lat, lon) {
       if (lat >= 0 && lat < 15 && lon >= 15 && lon < 30) return true;
       if (lat >= -15 && lat < 0 && lon >= -32 && lon < 30) return true;
@@ -320,13 +320,13 @@ const PREDEFINED_REGIONS = [
   },
   {
     id:'rift_valley', name:'Rift Valley & Great Lakes', group:'Western Afro-Eurasia',
-    hex:'#c44444', enabled:false,
+    hex:'#e89f9f', enabled:false,
     test(lat, lon) { return lat >= -15 && lat < 12.5 && lon >= 30 && lon < 37; },
     polygons:[[[-15,30],[-15,37],[12.5,37],[12.5,30]]]
   },
   {
     id:'east_africa', name:'East Africa', group:'Western Afro-Eurasia',
-    hex:'#c44444', enabled:false,
+    hex:'#e89f9f', enabled:false,
     test(lat, lon) {
       if (lat >= -15) return lat < 12.5 && lon >= 37 && lon < 60;
       return lon >= 41 && lon < 60;
@@ -335,7 +335,7 @@ const PREDEFINED_REGIONS = [
   },
   {
     id:'south_africa', name:'South Africa', group:'Western Afro-Eurasia',
-    hex:'#c44444', enabled:false,
+    hex:'#e89f9f', enabled:false,
     test(lat, lon) { return lat < -15 && lon >= -32 && lon < 41; },
     polygons:[[[-90,-32],[-90,41],[-15,41],[-15,-32]]]
   },
@@ -344,49 +344,49 @@ const PREDEFINED_REGIONS = [
   
   {
     id:'asia_sw', name:'Southwest Asia', group:'Eastern Afro-Eurasia',
-    hex:'#8e44ad', enabled:false,
+    hex:'#69010e', enabled:false,
     test(lat, lon) { return lat >= 12.5 && lat < 37 && lon >= 45 && lon < 60; },
     polygons:[[[12.5,45],[12.5,60],[37,60],[37,45]]]
   },
   {
     id:'north_central_asia', name:'North & Central Asia', group:'Eastern Afro-Eurasia',
-    hex:'#8e44ad', enabled:false,
+    hex:'#69010e', enabled:false,
     test(lat, lon) { return lat >= 37 && lat < 85 && lon >= 50 && lon < 130; },
     polygons:[[[37,50],[37,130],[85,130],[85,50]]]
   },
   {
     id:'asia_south', name:'South Asia', group:'Eastern Afro-Eurasia',
-    hex:'#8e44ad', enabled:false,
+    hex:'#69010e', enabled:false,
     test(lat, lon) { return lat < 37 && lon >= 60 && lon < 90; },
     polygons:[[[-90,60],[-90,90],[37,90],[37,60]]]
   },
   {
     id:'asia_se', name:'Southeast Asia', group:'Eastern Afro-Eurasia',
-    hex:'#8e44ad', enabled:false,
+    hex:'#9b51b4', enabled:false,
     test(lat, lon) { return lat < 37 && lon >= 90 && lon < 110; },
     polygons:[[[-90,90],[-90,110],[37,110],[37,90]]]
   },
   {
     id:'phil_china_seas', name:'Philippine & China Seas', group:'Eastern Afro-Eurasia',
-    hex:'#8e44ad', enabled:false,
+    hex:'#9b51b4', enabled:false,
     test(lat, lon) { return lat >= 3 && lat < 37 && lon >= 110 && lon < 130; },
     polygons:[[[3,110],[3,130],[37,130],[37,110]]]
   },
   {
     id:'wallacea', name:'Western Wallacea & Southeast Sundaland', group:'Eastern Afro-Eurasia',
-    hex:'#8e44ad', enabled:false,
+    hex:'#5b97e1', enabled:false,
     test(lat, lon) { return lat >= -11 && lat < 3 && lon >= 110 && lon < 125; },
     polygons:[[[-11,110],[-11,125],[3,125],[3,110]]]
   },
   {
     id:'sahul_n', name:'Eastern Wallacea & Northern Sahul', group:'Eastern Afro-Eurasia',
-    hex:'#8e44ad', enabled:false,
+    hex:'#5b97e1', enabled:false,
     test(lat, lon) { return lat >= -11 && lat < 3 && lon >= 125 && lon < 150; },
     polygons:[[[-11,125],[-11,150],[3,150],[3,125]]]
   },
   {
     id:'sahul_c', name:'Central Sahul (Northern Australia)', group:'Eastern Afro-Eurasia',
-    hex:'#8e44ad', enabled:false,
+    hex:'#5b97e1', enabled:false,
     test(lat, lon) {
       return lat >= -20 && lat < -11 && lon >= 110 && lon < 150;
     },
@@ -394,7 +394,7 @@ const PREDEFINED_REGIONS = [
   },
   {
     id:'sahul_s', name:'Southern Sahul (Southern Australia)', group:'Eastern Afro-Eurasia',
-    hex:'#8e44ad', enabled:false,
+    hex:'#04408d', enabled:false,
     test(lat, lon) {
       if (lat >= -20 || lon < 110) return false;
       return lon < 155;
@@ -403,7 +403,7 @@ const PREDEFINED_REGIONS = [
   },
   {
     id:'polynesia', name:'Polynesia', group:'Eastern Afro-Eurasia',
-    hex:'#8e44ad', enabled:false,
+    hex:'#9b51b4', enabled:false,
     test(lat, lon) {
       if (lat >= 3 && lat < 20 && lon >= 130 && lon <= 180) return true;
       if (lat >= -20 && lat < 3 && lon >= 150 && lon <= 180) return true;
@@ -423,7 +423,7 @@ const PREDEFINED_REGIONS = [
   
   {
     id:'asia_ne', name:'Northeast Asia', group:'Eastern Afro-Eurasia',
-    hex:'#8e44ad', enabled:false,
+    hex:'#9b51b4', enabled:false,
     test(lat, lon) {
       if (lat >= 20 && lat < 85 && lon >= 130 && lon <= 180) return true;
       if (lat >= 60 && lat < 85 && lon >= -180 && lon < -168) return true;
@@ -435,7 +435,7 @@ const PREDEFINED_REGIONS = [
   // ── AMERICAS ──
   {
     id:'a_nnw', name:'Northwest North America', group:'Americas',
-    hex:'#3b7dd8', enabled:false,
+    hex:'#9b51b4', enabled:false,
     test(lat, lon) {
       if (lon >= -100) return false;
       if (lat >= 60) return lat < 85 && lon >= -168;
@@ -445,7 +445,7 @@ const PREDEFINED_REGIONS = [
   },
   {
     id:'a_nne', name:'Northeast North America', group:'Americas',
-    hex:'#3b7dd8', enabled:false,
+    hex:'#9b51b4', enabled:false,
     test(lat, lon) {
       if (lon < -100) return false;
       if (lat >= 67) return lat < 85 && lon < -10;
@@ -455,20 +455,20 @@ const PREDEFINED_REGIONS = [
   },
   {
     id:'a_nse', name:'Southeast North America', group:'Americas',
-    hex:'#3b7dd8', enabled:false,
+    hex:'#9b51b4', enabled:false,
     test(lat, lon) { return lat >= 25 && lat < 40 && lon >= -100 && lon < -32; },
     polygons:[[[25,-100],[25,-32],[40,-32],[40,-100]]]
   },
 
   {
     id:'a_nsw', name:'Southwest North America', group:'Americas',
-    hex:'#3b7dd8', enabled:false,
+    hex:'#9b51b4', enabled:false,
     test(lat, lon) { return lat >= 25 && lat < 40 && lon >= -180 && lon < -100; },
     polygons:[[[25,-180],[25,-100],[40,-100],[40,-180]]]
   },
   {
     id:'a_c', name:'Central America & Antilles', group:'Americas',
-    hex:'#3b7dd8', enabled:false,
+    hex:'#9b51b4', enabled:false,
     test(lat, lon) {
       if (lat < 7 || lat >= 25) return false;
       if (lat >= 12.5) return lon >= -130 && lon < -32;
@@ -478,7 +478,7 @@ const PREDEFINED_REGIONS = [
   },
   {
     id:'a_snw', name:'Northwest South America', group:'Americas',
-    hex:'#3b7dd8', enabled:false,
+    hex:'#5b97e1', enabled:false,
     test(lat, lon) {
       if (lat < -15 || lon >= -65) return false;
       if (lat < 0) return lon >= -100;
@@ -490,7 +490,7 @@ const PREDEFINED_REGIONS = [
   },
   {
     id:'a_sne', name:'Northeast South America', group:'Americas',
-    hex:'#3b7dd8', enabled:false,
+    hex:'#5b97e1', enabled:false,
     test(lat, lon) {
       if (lon < -65 || lon >= -32) return false;
       if (lat < -15) return false;
@@ -503,13 +503,13 @@ const PREDEFINED_REGIONS = [
   },
   {
     id:'a_sse', name:'Southeast South America', group:'Americas',
-    hex:'#3b7dd8', enabled:false,
+    hex:'#04408d', enabled:false,
     test(lat, lon) { return lat < -15 && lon >= -65 && lon < -32; },
     polygons:[[[-90,-65],[-90,-32],[-15,-32],[-15,-65]]]
   },
   {
     id:'a_ssw', name:'Southwest South America', group:'Americas',
-    hex:'#3b7dd8', enabled:false,
+    hex:'#5b97e1', enabled:false,
     test(lat, lon) { return lat < -15 && lon >= -100 && lon < -65; },
     polygons:[[[-90,-100],[-90,-65],[-15,-65],[-15,-100]]]
   }
@@ -543,6 +543,13 @@ const TIER_STRUCTURE = {
     regions: ['mediterranean', 'europe_nw', 'asia_nw', 'levant', 'asia_sw', 'asia_south', 'north_central_asia']
   }
 };
+
+// ═══════════════════════════════════════════════════════════════
+// GLOTTOLOG FAMILY LOOKUP
+// Maps WALS code → Glottolog top-level family name
+// Built from WALS CLDF languages.csv + Glottolog languoid.csv
+// ═══════════════════════════════════════════════════════════════
+const GLOTTOLOG_LOOKUP = {"aab":"Nuclear Torricelli","aar":"South Omotic","aba":"Sepik","abb":"Afro-Asiatic","abd":"Atlantic-Congo","abe":"Afro-Asiatic","abh":"Afro-Asiatic","abi":"Guaicuruan","abk":"Abkhaz-Adyge","abm":"Muskogean","abn":"Pama-Nyungan","abo":"Afro-Asiatic","abu":"Abun","abv":"Timor-Alor-Pantar","abw":"Algic","abz":"Abkhaz-Adyge","ace":"Austronesian","acg":"Arawakan","ach":"Tupian","aci":"Mayan","acl":"Nilotic","acm":"Palaihnihan","acn":"Sino-Tibetan","aco":"Keresan","acu":"Chicham","ada":"Sign Language","adg":"Timor-Alor-Pantar","adi":"Atlantic-Congo","adk":"Andoque","adn":"Pama-Nyungan","adt":"Abkhaz-Adyge","ady":"Abkhaz-Adyge","adz":"Austronesian","aea":"Eskimo-Aleut","aeg":"Afro-Asiatic","ael":"Afro-Asiatic","afr":"Indo-European","aga":"Nuclear Trans New Guinea","agb":"Atlantic-Congo","agc":"Austronesian","agd":"Austronesian","agh":"Atlantic-Congo","agl":"Nakh-Daghestanian","agm":"Sino-Tibetan","ago":"Indo-European","agr":"Chicham","agt":"Pama-Nyungan","agu":"Mayan","agw":"Afro-Asiatic","aho":"Algic","ahs":"Afro-Asiatic","aht":"Athabaskan-Eyak-Tlingit","ahu":"Nuclear Trans New Guinea","aik":"Aikanã","ain":"Ainu","aiz":"Atlantic-Congo","aja":"Kresh-Aja","ajg":"Atlantic-Congo","aji":"Austronesian","aka":"Atlantic-Congo","akb":"Great Andamanese","akc":"Great Andamanese","akh":"Sino-Tibetan","akk":"Great Andamanese","akl":"Austronesian","akm":"Sino-Tibetan","akn":"Atlantic-Congo","ako":"Afro-Asiatic","akr":"Caddoan","akw":"Cariban","ala":"Sepik","alb":"Indo-European","alc":"Huarpean","ald":"Atlantic-Congo","ale":"Eskimo-Aleut","alg":"Algic","alk":"Austronesian","all":"Austronesian","aln":"Austronesian","als":"Alsea-Yaquina","alt":"Indo-European","alu":"Chukotko-Kamchatkan","alw":"Mangarrayi-Maran","alx":"Austronesian","aly":"Pama-Nyungan","ama":"Austronesian","amb":"Ndu","amc":"Pano-Tacanan","amd":"Sino-Tibetan","ame":"Nuclear Trans New Guinea","amh":"Afro-Asiatic","ami":"Austronesian","amk":"Harakmbut","aml":"Austronesian","amm":"Left May","amn":"Border","amo":"Atlantic-Congo","amp":"Pama-Nyungan","amq":"Austronesian","amr":"Afro-Asiatic","ams":"Afro-Asiatic","amt":"Sino-Tibetan","amu":"Arawakan","amx":"Nuclear Trans New Guinea","amz":"Otomanguean","ana":"Pano-Tacanan","anc":"Afro-Asiatic","ane":"Anem","ang":"Senagi","ani":"Khoe-Kwadi","anj":"Austronesian","anl":"Afro-Asiatic","ann":"Gunwinyguan","ano":"Sino-Tibetan","ant":"Angan","anu":"Atlantic-Congo","anx":"Nakh-Daghestanian","any":"Nilotic","ao":"Sino-Tibetan","aoj":"Nuclear Torricelli","apa":"Afro-Asiatic","apc":"Athabaskan-Eyak-Tlingit","ape":"Angan","api":"Nuclear-Macro-Je","apj":"Athabaskan-Eyak-Tlingit","apk":"Great Andamanese","apl":"Cariban","apt":"Sino-Tibetan","apu":"Arawakan","apw":"Athabaskan-Eyak-Tlingit","ara":"Arawakan","arb":"Zaparoan","arc":"Nakh-Daghestanian","ard":"South Bird's Head","arg":"Afro-Asiatic","arh":"Afro-Asiatic","ari":"Austronesian","arj":"Afro-Asiatic","ark":"Austronesian","arl":"Afro-Asiatic","arm":"Indo-European","arn":"Afro-Asiatic","aro":"Austronesian","arp":"Nuclear Torricelli","arq":"Afro-Asiatic","arr":"Pama-Nyungan","ars":"Afro-Asiatic","arv":"Afro-Asiatic","arw":"Indo-European","arx":"Austronesian","arz":"Indo-European","ash":"Abkhaz-Adyge","asl":"Sign Language","asm":"Nuclear Trans New Guinea","aso":"Turkic","ass":"Indo-European","ast":"Indo-European","asu":"Tupian","asy":"Afro-Asiatic","ata":"Austronesian","atb":"Austronesian","atc":"Austronesian","ath":"Sino-Tibetan","ati":"Algic","atk":"Atakapa","atm":"Kunza","atq":"Eskimo-Aleut","ats":"Palaihnihan","atu":"Afro-Asiatic","au":"Nuclear Torricelli","aul":"Austronesian","aus":"Sign Language","auy":"Nuclear Trans New Guinea","ava":"Nakh-Daghestanian","avk":"Atlantic-Congo","avo":"Central Sudanic","avt":"Atlantic-Congo","awa":"Nuclear Trans New Guinea","awd":"Indo-European","awe":"Pama-Nyungan","awi":"Kamula-Elevala","awk":"Atlantic-Congo","awn":"Afro-Asiatic","awp":"Barbacoan","awt":"Sepik","awy":"Border","axv":"Nakh-Daghestanian","ayi":"Atlantic-Congo","aym":"Aymaran","ayn":"Turkic","ayr":"Zamucoan","ayw":"Austronesian","aze":"Turkic","azi":"Turkic","baa":"Koiarian","bab":"Atlantic-Congo","bac":"Wadjiginy","bad":"Afro-Asiatic","bae":"Arawakan","baf":"Atlantic-Congo","bag":"Central Sudanic","bah":"Arawakan","bai":"Sino-Tibetan","baj":"Austronesian","bak":"Atlantic-Congo","bal":"Austronesian","bam":"Mande","ban":"Afro-Asiatic","bao":"Mongolic-Khitan","baq":"Arawakan","bar":"Nilotic","bas":"Atlantic-Congo","bat":"Austronesian","bau":"Nuclear Trans New Guinea","baw":"Sino-Tibetan","bbf":"Mande","bbl":"Atlantic-Congo","bbm":"Austronesian","bbu":"Atlantic-Congo","bbw":"Gunwinyguan","bca":"Pama-Nyungan","bch":"Afro-Asiatic","bco":"Salishan","bdc":"Indo-European","bdg":"Dravidian","bdk":"Nakh-Daghestanian","bdm":"Pama-Nyungan","bdu":"Atlantic-Congo","bdw":"West Bomberai","beb":"Nuclear Trans New Guinea","bec":"Indo-European","bee":"Atlantic-Congo","beg":"Austronesian","bej":"Afro-Asiatic","bel":"Sino-Tibetan","bem":"Atlantic-Congo","ben":"Indo-European","beo":"Beothuk","ber":"Berta","bet":"Kru","bez":"Nakh-Daghestanian","bfd":"Atlantic-Congo","bfg":"Afro-Asiatic","bfi":"Atlantic-Congo","bga":"Atlantic-Congo","bgg":"Austronesian","bgi":"Indo-European","bgl":"Chibchan","bgm":"Bangime","bgn":"Sino-Tibetan","bgo":"Central Sudanic","bgr":"Central Sudanic","bgs":"Atlantic-Congo","bgv":"Nakh-Daghestanian","bgz":"Austronesian","bhi":"Indo-European","bhn":"Sepik","bho":"Indo-European","bhu":"Austroasiatic","bia":"Atlantic-Congo","bid":"Afro-Asiatic","big":"Central Sudanic","bii":"Pama-Nyungan","bik":"Austronesian","bil":"Bilua","bim":"Austronesian","bin":"Nuclear Trans New Guinea","bio":"Kwomtari-Nai","biq":"Austronesian","bir":"Atlantic-Congo","bis":"Mande","bit":"Austronesian","biu":"Sino-Tibetan","bjs":"Austronesian","bka":"Central Sudanic","bkb":"Dravidian","bkd":"Austronesian","bki":"Cariban","bkl":"Austronesian","bkn":"Atlantic-Congo","bkr":"Austronesian","bkt":"Indo-European","bku":"Atlantic-Congo","bla":"Algic","blc":"Indo-European","ble":"Atlantic-Congo","blg":"Austronesian","blj":"Surmic","blk":"Austronesian","bln":"Afro-Asiatic","blq":"Afro-Asiatic","blr":"Indo-European","blt":"Sino-Tibetan","blu":"Atlantic-Congo","blx":"Siouan","bly":"Pama-Nyungan","blz":"Atlantic-Congo","bma":"Afro-Asiatic","bmb":"Atlantic-Congo","bmn":"Atlantic-Congo","bmr":"Nuclear Trans New Guinea","bmz":"Afro-Asiatic","bna":"Arawan","bnb":"Bunaban","bnd":"Mande","bng":"Baining","bni":"Atlantic-Congo","bnj":"Pama-Nyungan","bnk":"Atlantic-Congo","bnl":"Pama-Nyungan","bnm":"Nuclear Trans New Guinea","bnn":"Austronesian","bno":"Tucanoan","bnq":"Mande","bnr":"Pama-Nyungan","bnt":"Austronesian","bnu":"Pama-Nyungan","bnv":"Arawakan","bnw":"Arawakan","boa":"Anim","bob":"Atlantic-Congo","bod":"Sino-Tibetan","boi":"Ndu","boj":"Sino-Tibetan","bok":"Mande","bol":"Atlantic-Congo","bon":"Nuclear Trans New Guinea","boq":"Sino-Tibetan","bor":"Boran","bos":"Indo-European","bou":"Afro-Asiatic","boz":"Mande","bpa":"Afro-Asiatic","bpb":"Austroasiatic","bqb":"Basque","bqg":"Basque","bqh":"Basque","bqi":"Basque","bql":"Basque","bqn":"Basque","bqo":"Basque","bqr":"Basque","bqs":"Basque","bqz":"Basque","bra":"Austroasiatic","brb":"Atlantic-Congo","brc":"Chibchan","brd":"Nyulnyulan","bre":"Indo-European","brf":"Afro-Asiatic","brh":"Dravidian","bri":"Chibchan","brj":"Afro-Asiatic","brk":"Tor-Orya","brl":"Sino-Tibetan","brm":"Sino-Tibetan","brn":"Afro-Asiatic","bro":"Indo-European","brp":"Sko","brq":"Atlantic-Congo","brr":"Bororoan","brs":"Tucanoan","bru":"Austroasiatic","brw":"Austroasiatic","bry":"Angan","brz":"Central Sudanic","bse":"Afro-Asiatic","bsh":"Atlantic-Congo","bsi":"Afro-Asiatic","bsk":"Turkic","bsl":"Sign Language","bsm":"Indo-European","bso":"Basque","bsq":"Basque","bsr":"Atlantic-Congo","bth":"Afro-Asiatic","bti":"Betoi-Jirara","btk":"Austronesian","bto":"Austronesian","bua":"Maningrida","bub":"Atlantic-Congo","bud":"Afro-Asiatic","bug":"Austronesian","bui":"Austronesian","buj":"Atlantic-Congo","buk":"Atlantic-Congo","bul":"Indo-European","bum":"Austronesian","bun":"South Bougainville","bur":"Burushaski","bus":"Mande","but":"Mongolic-Khitan","buu":"Austronesian","buw":"Atlantic-Congo","buy":"Atlantic-Congo","bvi":"Austronesian","bwa":"Pama-Nyungan","bwc":"Austronesian","bxj":"Pama-Nyungan","bya":"Sino-Tibetan","bys":"Afro-Asiatic","byu":"Pama-Nyungan","bzi":"Geelvink Bay","cab":"Chibchan","cac":"Kakua-Nukak","cad":"Caddoan","cah":"Uto-Aztecan","cai":"Surmic","cak":"Mayan","cam":"Camsá","can":"Candoshi-Shapra","cap":"Pano-Tacanan","car":"Cariban","cas":"Pano-Tacanan","cat":"Chocoan","cav":"Pano-Tacanan","cax":"Arawakan","cay":"Barbacoan","cba":"Chumashan","cbo":"Pano-Tacanan","cch":"Otomanguean","cck":"Muskogean","ccm":"Otomanguean","cco":"Athabaskan-Eyak-Tlingit","ccp":"Cochimi-Yuman","cct":"Muskogean","cde":"Cariban","cea":"Algic","ceb":"Austronesian","cec":"Mayan","cem":"Austronesian","cga":"Atlantic-Congo","cha":"Austronesian","chb":"Lower Sepik","chc":"Nakh-Daghestanian","chd":"Sino-Tibetan","che":"Iroquoian","chg":"Sino-Tibetan","chh":"Afro-Asiatic","chi":"Chimariko","chj":"Mayan","chk":"Chukotko-Kamchatkan","chl":"Salishan","chm":"Nakh-Daghestanian","chn":"Sino-Tibetan","cho":"Tequistlatecan","chp":"Athabaskan-Eyak-Tlingit","chq":"Otomanguean","chr":"Austroasiatic","chs":"Sino-Tibetan","cht":"Otomanguean","chu":"Mataguayan","chv":"Turkic","chw":"Austronesian","chx":"Tequistlatecan","chy":"Cahuapanan","cic":"Atlantic-Congo","cil":"Atlantic-Congo","cin":"Chumashan","cjo":"Otomanguean","ckh":"Austronesian","ckl":"Chinookan","cku":"Chinookan","cla":"Salishan","clc":"Pama-Nyungan","cld":"Afro-Asiatic","cle":"Otomanguean","cln":"Cholonan","cly":"Turkic","cma":"Chibchan","cmc":"Comecrudan","cme":"Austronesian","cmh":"Uto-Aztecan","cmk":"Chimakuan","cml":"Sino-Tibetan","cmn":"Uto-Aztecan","cmr":"Sino-Tibetan","cmx":"Salishan","cmy":"Mayan","cnl":"Nuclear-Macro-Je","cnm":"Katukinan","cnt":"Sino-Tibetan","coa":"Coahuilteco","coc":"Tupian","coe":"Salishan","cof":"Cofán","cog":"Chibchan","coi":"Mayan","col":"Mayan","com":"Atlantic-Congo","coo":"Coosan","cop":"Afro-Asiatic","cor":"Uto-Aztecan","cos":"Miwok-Costanoan","cpa":"Arawakan","cpl":"Otomanguean","cpn":"Sino-Tibetan","cpw":"Algic","cpy":"Uru-Chipaya","cqt":"Chiquitano","cre":"Algic","crg":"Tupian","crh":"Austronesian","cri":"Turkic","crj":"Cariban","crk":"Muskogean","crl":"Austronesian","crn":"Indo-European","cro":"Siouan","crp":"Tucanoan","crq":"Athabaskan-Eyak-Tlingit","crt":"Mataguayan","csc":"Otomanguean","csf":"Otomanguean","csh":"Pano-Tacanan","csk":"Atlantic-Congo","csl":"Sign Language","cso":"Otomanguean","ctc":"Otomanguean","cte":"Otomanguean","cti":"Sino-Tibetan","ctl":"Indo-European","ctm":"Chitimacha","ctt":"Otomanguean","ctw":"Siouan","cua":"Austroasiatic","cub":"Tucanoan","cuc":"Timote-Cuica","cui":"Guahiboan","cul":"Arawan","cum":"Atlantic-Congo","cup":"Uto-Aztecan","cur":"Arawakan","cut":"Cuitlatec","cuu":"Austronesian","cvc":"Indo-European","cve":"Nuclear Trans New Guinea","cwe":"Salishan","cya":"Otomanguean","cyg":"Iroquoian","cyn":"Algic","cyv":"Cayubaba","cze":"Indo-European","daa":"Austronesian","dab":"Afro-Asiatic","dad":"Teberan","dag":"Dagan","dah":"Afro-Asiatic","dak":"Siouan","dam":"Chibchan","dan":"Mande","dar":"Indo-European","dat":"Nilotic","daw":"Naduhup","day":"Atlantic-Congo","dbd":"Atlantic-Congo","dbr":"Indo-European","dca":"Austronesian","dda":"Pama-Nyungan","ddf":"Dajuic","ddj":"Kru","dds":"Dogon","def":"Ijoid","deg":"Atlantic-Congo","den":"Arawan","der":"Senagi","des":"Tucanoan","det":"Khoe-Kwadi","deu":"Sino-Tibetan","dga":"Atlantic-Congo","dgb":"Atlantic-Congo","dge":"Sign Language","dgi":"Indo-European","dgo":"Atlantic-Congo","dgr":"Mongolic-Khitan","dgx":"Athabaskan-Eyak-Tlingit","dha":"Afro-Asiatic","dhb":"Pama-Nyungan","dhi":"Indo-European","dhl":"Pama-Nyungan","dhm":"Sino-Tibetan","dhr":"Pama-Nyungan","dhu":"Pama-Nyungan","dhw":"Pama-Nyungan","did":"Surmic","die":"Cochimi-Yuman","dig":"Sino-Tibetan","dim":"South Omotic","din":"Nilotic","dio":"Atlantic-Congo","diy":"Pama-Nyungan","diz":"Dizoid","dja":"Pama-Nyungan","dji":"Mirndi","djm":"Pama-Nyungan","djn":"Pama-Nyungan","djp":"Pama-Nyungan","djr":"Pama-Nyungan","dli":"Indo-European","dlm":"Senagi","dma":"Atlantic-Congo","dmi":"Sino-Tibetan","dmk":"Indo-European","dms":"Sino-Tibetan","dng":"Atlantic-Congo","dni":"Nuclear Trans New Guinea","dnw":"Afro-Asiatic","dob":"Austronesian","dok":"Atlantic-Congo","dol":"Turkic","dom":"Indo-European","don":"Tai-Kadai","dou":"Lakes Plain","doy":"Atlantic-Congo","dre":"Austronesian","drg":"Nakh-Daghestanian","dri":"Indo-European","drm":"Sino-Tibetan","dsh":"Indo-European","dts":"Dogon","dua":"Atlantic-Congo","dug":"Afro-Asiatic","duk":"Atlantic-Congo","dul":"Sino-Tibetan","dum":"Sko","dun":"Duna","dut":"Indo-European","duz":"Indo-European","dyi":"Pama-Nyungan","dym":"Atlantic-Congo","dyu":"Mande","ebi":"Atlantic-Congo","edo":"Bosavi","efi":"Atlantic-Congo","ega":"Atlantic-Congo","egn":"Atlantic-Congo","eip":"Nuclear Trans New Guinea","eja":"Atlantic-Congo","eka":"Nuclear Trans New Guinea","eko":"Atlantic-Congo","els":"Elseng","emb":"Chocoan","emc":"Chocoan","eme":"Tupian","eml":"Austronesian","emm":"Western Daly","ena":"Nuclear Trans New Guinea","ene":"Uralic","eng":"Indo-European","eno":"Austronesian","eny":"Atlantic-Congo","epe":"Chocoan","erk":"Austronesian","err":"Austronesian","ese":"Pano-Tacanan","esm":"Atacame","ess":"Esselen","est":"Uralic","ets":"Atlantic-Congo","eud":"Uto-Aztecan","eve":"Tungusic","evn":"Tungusic","ewa":"Atlantic-Congo","ewe":"Atlantic-Congo","ewo":"Atlantic-Congo","eya":"Athabaskan-Eyak-Tlingit","far":"Indo-European","fas":"Fasu","fbf":"Atlantic-Congo","fea":"Indo-European","fef":"Atlantic-Congo","fgu":"Atlantic-Congo","fij":"Austronesian","fin":"Uralic","fio":"Atlantic-Congo","fiw":"Austronesian","fli":"Atlantic-Congo","fma":"Atlantic-Congo","fni":"Atlantic-Congo","fno":"Indo-European","foe":"East Kutubu","fon":"Atlantic-Congo","for":"Nuclear Trans New Guinea","fox":"Algic","fqs":"Baibai-Fas","frd":"Austronesian","fre":"Indo-European","fri":"Indo-European","frw":"Indo-European","fsl":"Sign Language","fua":"Atlantic-Congo","fue":"Austronesian","ful":"Fulniô","fum":"Atlantic-Congo","fur":"Furan","fus":"Atlantic-Congo","fut":"Austronesian","fuz":"Sino-Tibetan","fye":"Atlantic-Congo","ga":"Atlantic-Congo","gaa":"Gaagudju","gad":"Atlantic-Congo","gae":"Indo-European","gag":"Turkic","gah":"Nuclear Trans New Guinea","gal":"Sino-Tibetan","gam":"Ta-Ne-Omotic","gan":"Great Andamanese","gap":"Austronesian","gar":"Sino-Tibetan","gau":"Indo-European","gav":"Tupian","gay":"Austronesian","gba":"Indo-European","gbb":"Atlantic-Congo","gbc":"Indo-European","gbe":"Indo-European","gbk":"Atlantic-Congo","gbl":"Indo-European","gbs":"Atlantic-Congo","gcy":"Indo-European","gdb":"Austroasiatic","gdf":"Afro-Asiatic","gdi":"Kru","gdk":"Dravidian","gdl":"Indo-European","gdr":"Afro-Asiatic","gds":"Nuclear Trans New Guinea","gel":"Austronesian","geo":"Kartvelian","ger":"Indo-European","gfr":"Indo-European","ggd":"Pama-Nyungan","ggu":"Pama-Nyungan","gha":"Indo-European","ghb":"Guahiboan","gho":"Atlantic-Congo","ghr":"Sino-Tibetan","gid":"Pama-Nyungan","gil":"Indo-European","gim":"Ta-Ne-Omotic","gir":"Atlantic-Congo","git":"Tsimshian","giz":"Afro-Asiatic","gji":"Pama-Nyungan","gjj":"Tupian","gku":"Puelche","gla":"Tai-Kadai","glc":"Indo-European","gll":"North Halmahera","gln":"Nuclear Trans New Guinea","glp":"Pama-Nyungan","gma":"Indo-European","gmb":"Barbacoan","gml":"Pama-Nyungan","gmt":"Pama-Nyungan","gmw":"Austronesian","gmz":"Gumuz","gna":"Lengua-Mascoy","gnb":"Gunwinyguan","gnd":"Afro-Asiatic","gnn":"Worrorran","gno":"Tucanoan","gny":"Pama-Nyungan","goa":"Arawakan","god":"Nakh-Daghestanian","goe":"Afro-Asiatic","gog":"Suki-Gogodala","goj":"Indo-European","gok":"Atlantic-Congo","gol":"Atlantic-Congo","gon":"Dravidian","goo":"Bunaban","gor":"Afro-Asiatic","gos":"Indo-European","gpz":"Indo-European","grb":"Kru","gre":"Eskimo-Aleut","grf":"Arawakan","grg":"Maningrida","grj":"Uto-Aztecan","grk":"Indo-European","grm":"Atlantic-Congo","grn":"Atlantic-Congo","gro":"Mande","grp":"Indo-European","grr":"Garrwan","grs":"Nuclear Trans New Guinea","grt":"Austronesian","grw":"Eskimo-Aleut","gsl":"Sign Language","gso":"Eskimo-Aleut","gtg":"Indo-European","gth":"Indo-European","gti":"Indo-European","gto":"Guató","gua":"Tupian","gud":"Afro-Asiatic","gue":"Kru","guf":"Pama-Nyungan","gug":"Pama-Nyungan","guh":"Nuclear Trans New Guinea","guj":"Indo-European","gul":"Central Sudanic","gum":"Pama-Nyungan","gun":"Atlantic-Congo","guq":"Cariban","gur":"Sino-Tibetan","gus":"Atlantic-Congo","guu":"Pama-Nyungan","guw":"Atlantic-Congo","gvi":"Indo-European","gwa":"Atlantic-Congo","gwe":"Indo-European","gwo":"Atlantic-Congo","gyb":"Guahiboan","gyc":"Sino-Tibetan","gzu":"Indo-European","had":"Hadza","hai":"Haida","hak":"Sino-Tibetan","hal":"Austronesian","ham":"Angan","han":"Sino-Tibetan","har":"Piawi","hat":"Hatam-Mansim","hau":"Afro-Asiatic","hav":"Cochimi-Yuman","haw":"Austronesian","hay":"Sino-Tibetan","hba":"Afro-Asiatic","hcr":"Indo-European","hdi":"Afro-Asiatic","heb":"Afro-Asiatic","heh":"Atlantic-Congo","hei":"Wakashan","hem":"Atlantic-Congo","her":"Atlantic-Congo","hhu":"Ndu","hia":"Cariban","hid":"Siouan","hil":"Austronesian","hin":"Indo-European","hix":"Cariban","hks":"Sign Language","hlb":"Indo-European","hli":"Salishan","hln":"Austroasiatic","hlp":"Cochimi-Yuman","hlu":"Salishan","hma":"Sino-Tibetan","hmb":"Chicham","hmd":"Hmong-Mien","hmi":"Huitotoan","hmo":"Hmong-Mien","hmr":"South Omotic","hmu":"Huitotoan","hna":"Afro-Asiatic","hnd":"Atlantic-Congo","hnk":"Nakh-Daghestanian","hnn":"Austronesian","hno":"Haida","ho":"Austroasiatic","hoa":"Austronesian","hok":"Sino-Tibetan","hol":"Atlantic-Congo","hop":"Uto-Aztecan","hpd":"Naduhup","hre":"Austroasiatic","hrr":"Afro-Asiatic","hrs":"Afro-Asiatic","hsl":"Wakashan","htc":"Mayan","hua":"Nuclear Trans New Guinea","huc":"Kxa","hui":"Uto-Aztecan","hum":"Huitotoan","hun":"Uralic","hup":"Athabaskan-Eyak-Tlingit","hve":"Huavean","hwc":"Indo-European","hwr":"Indo-European","hya":"Atlantic-Congo","hyo":"Sino-Tibetan","hzb":"Nakh-Daghestanian","iaa":"Austronesian","iat":"Ndu","iau":"Lakes Plain","iba":"Austronesian","ibi":"Atlantic-Congo","ibn":"Austronesian","ice":"Indo-European","ics":"Sign Language","idn":"Austronesian","ido":"Atlantic-Congo","idu":"Sino-Tibetan","ifi":"Indo-European","ifm":"Atlantic-Congo","ifu":"Austronesian","iga":"Quechuan","igb":"Atlantic-Congo","ige":"Atlantic-Congo","ign":"Arawakan","igs":"Eastern Jebel","iha":"West Bomberai","iir":"Austronesian","ijo":"Ijoid","ik":"Kuliak","ika":"Chibchan","ila":"Atlantic-Congo","ill":"Algic","ilo":"Austronesian","imo":"Border","ina":"South Bird's Head","ind":"Austronesian","ing":"Nakh-Daghestanian","inj":"Austronesian","inn":"Pama-Nyungan","inr":"Eskimo-Aleut","ins":"Eskimo-Aleut","inu":"Eskimo-Aleut","ipi":"Sign Language","ipk":"Sign Language","iql":"Eskimo-Aleut","iqu":"Zaparoan","ird":"Indo-European","iri":"Indo-European","irm":"Indo-European","irq":"Afro-Asiatic","irr":"Austronesian","irs":"Sign Language","irx":"Irántxe-Münkü","isa":"Sko","ise":"Atlantic-Congo","ish":"Indo-European","isi":"Greater Kwerba","isl":"Sign Language","isn":"Austronesian","iso":"Atlantic-Congo","iss":"Sign Language","ita":"Indo-European","itb":"Indo-European","ite":"Chukotko-Kamchatkan","itg":"Indo-European","itn":"Indo-European","ito":"Itonama","itu":"Indo-European","itw":"Austronesian","itz":"Mayan","iva":"Austronesian","iwa":"Iwaidjan Proper","iwm":"Sepik","ixc":"Otomanguean","ixi":"Mayan","izh":"Uralic","izi":"Atlantic-Congo","jab":"Austronesian","jad":"Sino-Tibetan","jah":"Austroasiatic","jak":"Mayan","jam":"Mirndi","jaq":"Aymaran","jar":"Atlantic-Congo","jav":"Austronesian","jbt":"Nuclear-Macro-Je","jcr":"Indo-European","jeb":"Cahuapanan","jeh":"Austroasiatic","jel":"Mande","jem":"Kiowa-Tanoan","jia":"Sino-Tibetan","jib":"Afro-Asiatic","jin":"Sino-Tibetan","jiv":"Chicham","jlu":"Nilotic","jmm":"Arawan","jmo":"Central Sudanic","jms":"Dogon","jng":"Sino-Tibetan","joh":"Sino-Tibetan","jom":"Narrow Talodi","jpn":"Japonic","jpr":"Cariban","jrn":"Tupian","jrw":"Jarawa-Onge","jug":"Sino-Tibetan","juh":"Kxa","juk":"Atlantic-Congo","jum":"Tupian","jun":"Austroasiatic","jur":"Tungusic","jva":"Nuclear-Macro-Je","jwr":"Arawan","kaa":"Tupian","kab":"Abkhaz-Adyge","kac":"Sino-Tibetan","kad":"Kadugli-Krongo","kae":"Kaki Ae","kag":"Austronesian","kai":"Ramu","kaj":"Kaure-Kosare","kak":"Nuclear Trans New Guinea","kal":"Indo-European","kam":"Austronesian","kan":"Atlantic-Congo","kao":"Austronesian","kap":"Austronesian","kaq":"Pama-Nyungan","kar":"Central Sudanic","kas":"Indo-European","kat":"Nuclear Trans New Guinea","kau":"Austronesian","kaw":"Tupian","kay":"Tangkic","kaz":"Turkic","kba":"Atlantic-Congo","kbi":"Sino-Tibetan","kbl":"Afro-Asiatic","kbo":"Keram","kbr":"Austronesian","kbt":"Indo-European","kbu":"Saharan","kbw":"Sino-Tibetan","kby":"Atlantic-Congo","kch":"Songhay","kda":"Dravidian","kdg":"Pano-Tacanan","kdw":"Guaicuruan","kdz":"Austronesian","kea":"Mayan","ked":"Austronesian","kef":"Ta-Ne-Omotic","kei":"Austronesian","kek":"Mayan","kel":"Austronesian","kem":"Afro-Asiatic","ken":"Central Sudanic","keo":"Austronesian","ker":"Afro-Asiatic","ket":"Yeniseian","keu":"Austronesian","kew":"Nuclear Trans New Guinea","kfc":"Indo-European","kfe":"Atlantic-Congo","kfy":"Turkic","kga":"Atlantic-Congo","kgi":"Atlantic-Congo","kgl":"Nuclear Trans New Guinea","kgm":"Atlantic-Congo","kgr":"Atlantic-Congo","kgt":"Eskimo-Aleut","kgu":"Pama-Nyungan","kgy":"Sino-Tibetan","kgz":"Turkic","kha":"Mongolic-Khitan","khd":"Sino-Tibetan","khg":"Sino-Tibetan","khi":"Nakh-Daghestanian","khk":"Turkic","khl":"Turkic","khm":"Austroasiatic","khn":"Tai-Kadai","kho":"Khoe-Kwadi","khr":"Austroasiatic","khs":"Austroasiatic","khu":"Sino-Tibetan","khv":"Nakh-Daghestanian","khw":"Indo-European","kic":"Algic","kie":"Ramu","kij":"Jarrakan","kik":"Atlantic-Congo","kil":"Atlantic-Congo","kim":"Kolopom","kin":"Atlantic-Congo","kio":"Kiowa-Tanoan","kiq":"Mongolic-Khitan","kir":"Atlantic-Congo","kis":"Atlantic-Congo","kit":"Caddoan","kiu":"Timor-Alor-Pantar","kiw":"Kiwaian","kje":"Tucanoan","kji":"Indo-European","kjn":"Pama-Nyungan","kjo":"Austronesian","kjr":"Ta-Ne-Omotic","kkb":"Atlantic-Congo","kkl":"Sign Language","kkn":"Indo-European","kko":"Mande","kkp":"Turkic","kkq":"Cariban","kkr":"Lakes Plain","kkt":"Austronesian","kku":"Austroasiatic","kkv":"Austronesian","kkw":"Karankawa","kky":"Austronesian","kkz":"Bookkeeping","kla":"Kru","klb":"Afro-Asiatic","klg":"Sino-Tibetan","klh":"Indo-European","kli":"Austronesian","klk":"Atlantic-Congo","kll":"Bosavi","klm":"Klamath-Modoc","kln":"Timor-Alor-Pantar","klp":"Kalapuyan","klq":"Nuclear Trans New Guinea","klr":"Indo-European","kls":"Salishan","klt":"Austronesian","klv":"Austronesian","klw":"Cochimi-Yuman","kly":"Pama-Nyungan","klz":"Atlantic-Congo","kma":"Tupian","kmb":"Nuclear Trans New Guinea","kmh":"Sino-Tibetan","kmi":"Atlantic-Congo","kmj":"Nilotic","kmk":"Mongolic-Khitan","kmn":"Nuclear Trans New Guinea","kmo":"Koiarian","kmp":"Kunimaipan","kmr":"Nuclear Trans New Guinea","kms":"Uralic","kmt":"Nimboranic","kmu":"Austroasiatic","kmw":"Eastern Daly","kmz":"Nuclear Torricelli","kna":"Tupian","knb":"Yam","knc":"Pama-Nyungan","knd":"Dravidian","kng":"Nuclear-Macro-Je","kni":"Atlantic-Congo","knk":"Afro-Asiatic","knm":"Kunama","knn":"Sino-Tibetan","kno":"Kanoê","knp":"Yam","knq":"Indo-European","knr":"Saharan","knu":"North Bougainville","knw":"Maiduan","knz":"Sino-Tibetan","koa":"Muskogean","kob":"Nuclear Trans New Guinea","kod":"Dravidian","koe":"Surmic","koh":"Atlantic-Congo","koi":"Koiarian","kok":"Sino-Tibetan","kol":"Dravidian","kom":"Koman","kon":"Atlantic-Congo","koo":"Austronesian","kop":"Uralic","kor":"Koreanic","kos":"Austronesian","kot":"Dravidian","kou":"Atlantic-Congo","kow":"Atlantic-Congo","koy":"Dravidian","kpa":"Atlantic-Congo","kpe":"Mande","kpm":"Austronesian","kpn":"Austronesian","kpo":"Atlantic-Congo","kpw":"Sino-Tibetan","kqq":"Nuclear-Macro-Je","kra":"Austronesian","krb":"Austronesian","krc":"Turkic","krd":"Indo-European","kre":"Kresh-Aja","krf":"Nuclear Trans New Guinea","krg":"Atlantic-Congo","krh":"Nuclear-Macro-Je","kri":"Unclassifiable","krj":"Pama-Nyungan","krk":"Karuk","krl":"Uralic","krm":"Turkic","krn":"Khoe-Kwadi","kro":"Kadugli-Krongo","krq":"Chukotko-Kamchatkan","krr":"Austronesian","krt":"Nakh-Daghestanian","krw":"Nuclear Trans New Guinea","kry":"Chukotko-Kamchatkan","krz":"Nakh-Daghestanian","ksa":"Keresan","kse":"Songhay","ksg":"Sino-Tibetan","ksh":"Pomoan","ksi":"Austroasiatic","ksl":"Sign Language","ksm":"Atlantic-Congo","ksn":"Austroasiatic","ksp":"Atlantic-Congo","ksr":"Austronesian","kss":"Atlantic-Congo","ksu":"Indo-European","kta":"Koiarian","ktb":"Atlantic-Congo","ktc":"Kadugli-Krongo","kte":"Atlantic-Congo","kth":"Athabaskan-Eyak-Tlingit","kti":"Nuclear Trans New Guinea","ktk":"Afro-Asiatic","ktl":"Katla-Tima","ktm":"Chinookan","ktn":"Nuclear Trans New Guinea","kto":"Athabaskan-Eyak-Tlingit","ktp":"Austronesian","ktt":"Yeniseian","ktu":"Austroasiatic","kty":"Uralic","ktz":"Indo-European","kua":"Austronesian","kug":"Sino-Tibetan","kui":"Dravidian","kuk":"Nilotic","kul":"Ta-Ne-Omotic","kum":"Indo-European","kun":"Chibchan","kuo":"Kuot","kuq":"Turkic","kur":"Dravidian","kus":"Kusunda","kut":"Kutenai","kuu":"Pama-Nyungan","kuv":"Dravidian","kuy":"Austronesian","kuz":"Austronesian","kwa":"Austronesian","kwb":"Greater Kwerba","kwe":"Mayan","kwk":"Wakashan","kwm":"Afro-Asiatic","kwn":"Atlantic-Congo","kwo":"Sepik","kwr":"Austronesian","kws":"Uto-Aztecan","kwt":"Kwomtari-Nai","kwy":"Atlantic-Congo","kwz":"Kwaza","kxo":"Khoe-Kwadi","kya":"Pama-Nyungan","kyg":"Atlantic-Congo","kyk":"Nuclear Trans New Guinea","kyl":"Sino-Tibetan","kym":"Turkic","kyn":"Athabaskan-Eyak-Tlingit","kyo":"Atlantic-Congo","kyp":"Nuclear-Macro-Je","kyq":"Wakashan","kyr":"Pauwasi","kyt":"Pama-Nyungan","kyz":"Tupian","kzy":"Uralic","laa":"Laal","lab":"Austronesian","lac":"Mayan","lad":"Sino-Tibetan","laf":"Lafofa","lag":"Afro-Asiatic","lah":"Sino-Tibetan","lai":"Sino-Tibetan","lak":"Nakh-Daghestanian","lal":"Sino-Tibetan","lam":"Afro-Asiatic","lan":"Nilotic","lao":"Tai-Kadai","lar":"Laragia","lat":"Indo-European","lau":"Austronesian","lav":"Lavukaleve","laz":"Kartvelian","lbu":"Atlantic-Congo","lch":"Tai-Kadai","lcr":"Indo-European","lda":"Atlantic-Congo","ldn":"Indo-European","ldo":"Atlantic-Congo","ldu":"Central Sudanic","leb":"Atlantic-Congo","lec":"Leco","leg":"Atlantic-Congo","lel":"Afro-Asiatic","len":"Austronesian","lep":"Sino-Tibetan","les":"Central Sudanic","let":"Austronesian","lew":"Austronesian","lez":"Nakh-Daghestanian","lga":"Austronesian","lge":"Indo-European","lgh":"Sign Language","lgi":"Atlantic-Congo","lgp":"Sign Language","lgt":"Central Sudanic","lgu":"Austronesian","lha":"Tai-Kadai","lho":"Sino-Tibetan","lic":"Tai-Kadai","lii":"Sign Language","lil":"Salishan","lim":"Sino-Tibetan","lin":"Atlantic-Congo","lis":"Sino-Tibetan","lit":"Indo-European","liv":"Uralic","lje":"Austronesian","lkk":"Tai-Kadai","lkt":"Siouan","lla":"Pama-Nyungan","llm":"Atlantic-Congo","lma":"Mande","lmb":"Atlantic-Congo","lmg":"Afro-Asiatic","lmh":"Austronesian","lml":"Limilngan-Wulna","lmn":"Indo-European","lmp":"Austronesian","lmu":"Austronesian","lnd":"Atlantic-Congo","lng":"Lengua-Mascoy","lnj":"Pama-Nyungan","lno":"Indo-European","lns":"Atlantic-Congo","lnw":"Austronesian","lob":"Atlantic-Congo","lok":"Mande","lon":"Austronesian","lot":"Sino-Tibetan","lou":"Austronesian","lov":"Austroasiatic","loz":"Atlantic-Congo","lrd":"Tangkic","lrk":"Austronesian","lsa":"Sign Language","lsb":"Sign Language","lse":"Sign Language","lsf":"Sign Language","lsq":"Sign Language","lu":"Tai-Kadai","lua":"Atlantic-Congo","luc":"Atlantic-Congo","lud":"Austronesian","lug":"Central Sudanic","lui":"Uto-Aztecan","lul":"Lule","lum":"Salishan","lun":"Sino-Tibetan","luo":"Nilotic","lur":"Indo-European","lus":"Salishan","luv":"Atlantic-Congo","lux":"Indo-European","luy":"Atlantic-Congo","lye":"Atlantic-Congo","ma":"Atlantic-Congo","maa":"Nilotic","mab":"Maban","mac":"Cariban","mad":"Central Sudanic","mae":"Austronesian","mag":"Sino-Tibetan","mah":"Uralic","mai":"Indo-European","maj":"Surmic","mak":"Wakashan","mal":"Austronesian","mam":"Mayan","man":"Mande","mao":"Austronesian","map":"Araucanian","mar":"Cochimi-Yuman","mas":"Afro-Asiatic","mau":"Iwaidjan Proper","mav":"Nuclear Trans New Guinea","maw":"Mande","max":"Nuclear-Macro-Je","may":"Maybratic","maz":"Otomanguean","mba":"Atlantic-Congo","mbb":"Pama-Nyungan","mbe":"Atlantic-Congo","mbg":"Atlantic-Congo","mbi":"Atlantic-Congo","mbl":"Atlantic-Congo","mbm":"Atlantic-Congo","mbo":"Bogia","mbr":"Afro-Asiatic","mbt":"Central Sudanic","mbu":"Ndu","mby":"Central Sudanic","mbz":"Atlantic-Congo","mca":"Mataguayan","mcc":"Mochica","mcd":"Indo-European","mce":"Indo-European","mcf":"Algic","mcg":"Guahiboan","mch":"Arawakan","mcn":"Tucanoan","mco":"Mixe-Zoque","mcr":"Indo-European","mcs":"Miwok-Costanoan","mcv":"Guaicuruan","mda":"Afro-Asiatic","mdb":"Pama-Nyungan","mde":"Mande","mdg":"Atlantic-Congo","mdk":"Mande","mdl":"Eastern Daly","mdm":"Pama-Nyungan","mdn":"Siouan","mdo":"Atlantic-Congo","mdr":"Austronesian","mds":"Austronesian","mdu":"Atlantic-Congo","mdw":"Atlantic-Congo","mdz":"Atlantic-Congo","mea":"East Bird's Head","meb":"Austronesian","mee":"Surmic","meh":"Afro-Asiatic","mei":"Sino-Tibetan","mek":"Tupian","mel":"Austronesian","mem":"Border","men":"Algic","mer":"Eastern Trans-Fly","mey":"Angan","mga":"Atlantic-Congo","mgd":"Austronesian","mgg":"Mongolic-Khitan","mgh":"Indo-European","mgi":"Mailuan","mgk":"Atlantic-Congo","mgl":"Kartvelian","mgn":"Austronesian","mgo":"Atlantic-Congo","mgq":"Central Sudanic","mgu":"Afro-Asiatic","mhc":"Algic","mhi":"Indo-European","mhk":"Sepik","mhl":"Sino-Tibetan","mhm":"Austroasiatic","mhu":"Atlantic-Congo","mic":"Algic","mid":"Nubian","mie":"Hmong-Mien","mig":"Afro-Asiatic","mii":"Tamaic","mij":"Sino-Tibetan","mik":"Sino-Tibetan","mil":"Sino-Tibetan","min":"Austronesian","mir":"Jarrakan","mis":"Misumalpan","mit":"Atlantic-Congo","miy":"Afro-Asiatic","miz":"Sino-Tibetan","mja":"Otomanguean","mjc":"Otomanguean","mjk":"Atlantic-Congo","mka":"Mande","mkb":"Miwok-Costanoan","mkd":"Atlantic-Congo","mke":"Austronesian","mkg":"Mande","mkh":"Mongolic-Khitan","mki":"Muskogean","mkj":"Timor-Alor-Pantar","mkl":"Bulaka River","mkn":"Atlantic-Congo","mko":"Afro-Asiatic","mkq":"Atlantic-Congo","mkr":"Ramu","mks":"Austronesian","mku":"Western Daly","mkw":"Máku","mkz":"Atlantic-Congo","mla":"Atlantic-Congo","mlc":"Indo-European","mle":"Ta-Ne-Omotic","mlg":"Afro-Asiatic","mli":"Baining","mlk":"Northern Daly","mll":"Molale","mlm":"Austroasiatic","mlt":"Afro-Asiatic","mlu":"Austronesian","mly":"Austronesian","mma":"Afro-Asiatic","mmb":"Austronesian","mme":"Uralic","mmi":"Atlantic-Congo","mmn":"Austronesian","mmo":"Uralic","mmp":"Atlantic-Congo","mms":"Austronesian","mmu":"Austronesian","mmv":"Central Sudanic","mmw":"Atlantic-Congo","mna":"Austronesian","mnc":"Tungusic","mnd":"Sino-Tibetan","mne":"Maiduan","mng":"Austronesian","mni":"Nuclear Trans New Guinea","mnj":"Pama-Nyungan","mnk":"Mande","mnm":"Austronesian","mno":"Uto-Aztecan","mnr":"Austronesian","mns":"Uralic","mnt":"Austronesian","mnu":"Hmong-Mien","mnv":"Austronesian","mnx":"Indo-European","mny":"Pama-Nyungan","mnz":"Atlantic-Congo","moa":"Austronesian","moc":"Ta-Ne-Omotic","moe":"Uralic","mof":"Afro-Asiatic","mog":"Mongolic-Khitan","moh":"Iroquoian","moj":"Cochimi-Yuman","mok":"Austronesian","mol":"Indo-European","mom":"Mombum-Koneraw","mon":"Austroasiatic","moo":"Atlantic-Congo","mop":"Mayan","mor":"Austronesian","mos":"Mosetén-Chimané","mot":"South Bougainville","mou":"Central Sudanic","mov":"Movima","mpa":"Southern Daly","mpo":"Atlantic-Congo","mpr":"Arawakan","mpt":"Nuclear Trans New Guinea","mpu":"Mpur","mpy":"Cariban","mqc":"Indo-European","mqf":"Somahai","mra":"Mangarrayi-Maran","mrc":"Sino-Tibetan","mrd":"Anim","mrg":"Afro-Asiatic","mrh":"Western Daly","mri":"Marori","mrj":"Pama-Nyungan","mrk":"Lower Sepik","mrl":"Surmic","mrn":"Austronesian","mro":"Heibanic","mrq":"Austronesian","mrr":"Western Daly","mrs":"Mairasic","mrt":"Pama-Nyungan","mru":"Sino-Tibetan","mrw":"Pama-Nyungan","msc":"Chibchan","mse":"Algic","msg":"Sino-Tibetan","msh":"Austronesian","msk":"Narrow Talodi","msl":"Maban","msm":"Austronesian","msn":"Austronesian","msq":"Salishan","mss":"Miwok-Costanoan","msy":"Sino-Tibetan","mta":"Austronesian","mtb":"Atlantic-Congo","mtg":"Algic","mth":"Mixe-Zoque","mti":"Chibchan","mtk":"Austronesian","mtl":"Athabaskan-Eyak-Tlingit","mto":"Dravidian","mtp":"Mixe-Zoque","mts":"Pano-Tacanan","mtt":"Algic","mtu":"Austronesian","mua":"Atlantic-Congo","mud":"Atlantic-Congo","mug":"Nuclear Trans New Guinea","muh":"Afro-Asiatic","mui":"Boran","mul":"Tai-Kadai","mum":"Atlantic-Congo","mun":"Austroasiatic","muo":"Austroasiatic","mup":"Afro-Asiatic","mur":"Surmic","mus":"Austronesian","mut":"Miwok-Costanoan","muu":"Tupian","muy":"Austronesian","mwa":"Pama-Nyungan","mwb":"Austronesian","mwc":"Indo-European","mwe":"Atlantic-Congo","mwl":"Miwok-Costanoan","mwn":"Miwok-Costanoan","mwo":"Austronesian","mwp":"Miwok-Costanoan","mxa":"Otomanguean","mxc":"Otomanguean","mxe":"Austronesian","mxg":"Otomanguean","mxj":"Otomanguean","mxl":"Otomanguean","mxm":"Otomanguean","mxo":"Otomanguean","mxp":"Otomanguean","mxs":"Otomanguean","mxt":"Otomanguean","mxu":"Otomanguean","mxx":"Mixe-Zoque","mxy":"Otomanguean","mxz":"Otomanguean","mya":"Austronesian","myg":"Atlantic-Congo","myi":"Mangarrayi-Maran","myk":"Austronesian","mym":"Dravidian","myn":"Austronesian","myo":"Uto-Aztecan","myr":"Pano-Tacanan","myy":"Pama-Nyungan","mzc":"Otomanguean","mzh":"Otomanguean","mzn":"Indo-European","naa":"Afro-Asiatic","nab":"Nuclear Trans New Guinea","nad":"Naduhup","naf":"Atlantic-Congo","nag":"Yale","nah":"Nihali","nai":"Tungusic","naj":"Afro-Asiatic","nak":"Austronesian","nal":"Austronesian","nam":"Sepik","nan":"Nilotic","nap":"Afro-Asiatic","nar":"Nara","nas":"South Bougainville","nat":"Natchez","nau":"Austronesian","nav":"Athabaskan-Eyak-Tlingit","nax":"Sino-Tibetan","nbb":"Austronesian","nbd":"Nubian","nbe":"Atlantic-Congo","nbh":"Nubian","nbk":"Austronesian","nbm":"Atlantic-Congo","nbo":"Atlantic-Congo","nbr":"Chibchan","nca":"Austroasiatic","ncm":"Atlantic-Congo","ndb":"Atlantic-Congo","nde":"Atlantic-Congo","ndg":"Atlantic-Congo","ndi":"Atlantic-Congo","ndj":"Maningrida","ndo":"Atlantic-Congo","ndr":"Austronesian","ndt":"Atlantic-Congo","ndu":"Atlantic-Congo","ndy":"Indo-European","ned":"Sign Language","neg":"Tungusic","neh":"Austronesian","nel":"Austronesian","nen":"Uralic","nep":"Indo-European","nev":"Uto-Aztecan","new":"Sino-Tibetan","ney":"Kru","nez":"Sahaptian","nga":"Uralic","ngb":"Atlantic-Congo","ngd":"Austronesian","nge":"Atlantic-Congo","ngg":"Southern Daly","ngi":"Pama-Nyungan","ngj":"Pama-Nyungan","ngk":"Southern Daly","ngl":"Gunwinyguan","ngm":"Central Sudanic","ngn":"Gunwinyguan","ngo":"Atlantic-Congo","ngr":"Pama-Nyungan","ngt":"Sino-Tibetan","ngu":"Austronesian","ngw":"Pama-Nyungan","ngy":"Pama-Nyungan","ngz":"Afro-Asiatic","nha":"Pama-Nyungan","nhc":"Uto-Aztecan","nhh":"Uto-Aztecan","nhm":"Uto-Aztecan","nhn":"Uto-Aztecan","nhp":"Uto-Aztecan","nht":"Uto-Aztecan","nhu":"Uto-Aztecan","nhx":"Uto-Aztecan","nia":"Austronesian","nic":"Austroasiatic","nif":"Austronesian","nih":"Sign Language","nim":"Nimboranic","nin":"Nuclear Torricelli","nis":"Sino-Tibetan","nit":"Wakashan","niu":"Austronesian","niv":"Nivkh","nju":"Pama-Nyungan","nkb":"Gunwinyguan","nke":"Atlantic-Congo","nkk":"Maningrida","nkn":"Atlantic-Congo","nko":"Atlantic-Congo","nkr":"Austronesian","nkt":"Austroasiatic","nku":"Nubian","nlr":"Pama-Nyungan","nlu":"Pama-Nyungan","nly":"Pama-Nyungan","nma":"Sino-Tibetan","nmb":"Nambiquaran","nmd":"East Strickland","nmi":"Uto-Aztecan","nmm":"Sino-Tibetan","nmp":"Uto-Aztecan","nnc":"Austroasiatic","nnd":"Nuclear Trans New Guinea","nne":"Austronesian","nng":"Atlantic-Congo","nnk":"Nuclear Trans New Guinea","nnm":"Austronesian","nnn":"Atlantic-Congo","nnt":"Algic","nob":"Nubian","noc":"Sino-Tibetan","nog":"Turkic","nok":"Turkic","nom":"Arawakan","non":"Atlantic-Congo","noo":"Atlantic-Congo","nor":"Indo-European","npa":"Uto-Aztecan","nph":"Sino-Tibetan","npi":"Indo-European","npn":"Indo-European","npu":"Austronesian","nrg":"Atlantic-Congo","nrm":"Austronesian","nro":"Khoe-Kwadi","nse":"Atlantic-Congo","nsg":"Tsimshian","nsk":"Algic","nsn":"Maiduan","nsy":"Afro-Asiatic","nsz":"Uto-Aztecan","nte":"Sign Language","nti":"Central Sudanic","ntj":"Pama-Nyungan","ntn":"Atlantic-Congo","nto":"Atlantic-Congo","ntu":"Uralic","nua":"Austronesian","nub":"Afro-Asiatic","nue":"Nilotic","nug":"Gunwinyguan","nuk":"Kakua-Nukak","nun":"Tai-Kadai","nup":"Atlantic-Congo","nus":"Sino-Tibetan","nuu":"Wakashan","nvs":"Nivkh","nwd":"Sino-Tibetan","nya":"Pama-Nyungan","nyg":"Kuliak","nyh":"Atlantic-Congo","nyi":"Nyimang","nyk":"Sino-Tibetan","nyl":"Austronesian","nym":"Atlantic-Congo","nyn":"Nyulnyulan","nyr":"Pama-Nyungan","nyu":"Nyulnyulan","nza":"Atlantic-Congo","nze":"Sino-Tibetan","nzs":"Sign Language","obg":"Atlantic-Congo","obk":"Lakes Plain","obo":"Atlantic-Congo","oca":"Huitotoan","occ":"Indo-European","ocu":"Otomanguean","ogb":"Atlantic-Congo","oi":"Austroasiatic","oir":"Mongolic-Khitan","oix":"Otomanguean","oji":"Algic","ojm":"Algic","ojs":"Algic","oka":"Salishan","oko":"Indo-European","oks":"Nuclear Trans New Guinea","oku":"Atlantic-Congo","olm":"Austronesian","olo":"Nuclear Torricelli","olu":"Mixe-Zoque","oma":"Tupian","omh":"Siouan","omi":"Koiarian","ond":"Iroquoian","one":"Nuclear Torricelli","ong":"Jarawa-Onge","onn":"Iroquoian","ono":"Nuclear Trans New Guinea","ood":"Uto-Aztecan","ora":"Atlantic-Congo","orb":"Afro-Asiatic","orc":"Tungusic","ord":"Mongolic-Khitan","ore":"Tucanoan","orh":"Afro-Asiatic","ori":"Rashad","ork":"Tungusic","orl":"Eleman","orm":"Indo-European","oro":"Nuclear Trans New Guinea","orw":"Afro-Asiatic","ory":"Tor-Orya","osa":"Siouan","osm":"Otomanguean","oss":"Indo-European","otm":"Otomanguean","oto":"Siouan","otr":"Heibanic","ots":"Otomanguean","owc":"Afro-Asiatic","owi":"Left May","oya":"Indo-European","paa":"Afro-Asiatic","pac":"Austroasiatic","pad":"Austronesian","pae":"Páez","pag":"North Halmahera","pai":"Austronesian","pak":"Pama-Nyungan","pal":"Austronesian","pam":"Otomanguean","pan":"Indo-European","pap":"Indo-European","par":"Nilotic","pat":"Austronesian","pau":"Arawan","paw":"Pawaia","pba":"Uto-Aztecan","pcm":"Mayan","pdp":"Teberan","pec":"Chibchan","pem":"Cariban","pen":"Dravidian","per":"Afro-Asiatic","pga":"Guaicuruan","pgl":"Austronesian","phl":"Sino-Tibetan","pia":"Saliban","pil":"Austronesian","pin":"Pama-Nyungan","pip":"Uto-Aztecan","pir":"Arawakan","pis":"Nuclear Trans New Guinea","pit":"Pama-Nyungan","pkm":"Mayan","pkn":"Pama-Nyungan","pkt":"Nilotic","pla":"Guahiboan","plb":"Indo-European","plg":"Austroasiatic","plh":"Austronesian","plk":"Arawakan","plp":"Austronesian","plr":"Atlantic-Congo","pmc":"Pomoan","pme":"Pomoan","pmn":"Pomoan","pms":"Austronesian","pna":"Austronesian","png":"Atlantic-Congo","pnn":"Austronesian","pno":"Uto-Aztecan","pnr":"Cariban","pnu":"Hmong-Mien","pnx":"Nuclear-Macro-Je","pny":"Pama-Nyungan","poa":"Austronesian","pod":"Afro-Asiatic","pog":"Atlantic-Congo","poh":"Austronesian","pok":"Sko","pol":"Indo-European","pop":"Otomanguean","por":"Indo-European","pot":"Algic","pow":"Algic","ppc":"Arawakan","ppi":"Pama-Nyungan","pra":"Indo-European","prc":"Arawakan","prd":"Dravidian","pre":"Atlantic-Congo","prh":"Pirahã","pri":"Indo-European","prk":"Sino-Tibetan","pro":"Indo-European","prs":"Indo-European","prt":"Tucanoan","psh":"Indo-European","psj":"Otomanguean","psl":"Sign Language","psm":"Algic","pso":"Pomoan","psv":"Otomanguean","psw":"Austronesian","pta":"Austronesian","pte":"Sino-Tibetan","ptp":"Austronesian","ptt":"Sino-Tibetan","ptw":"Wintuan","pui":"Puinave","puk":"Austroasiatic","pul":"Austronesian","pum":"Sino-Tibetan","pun":"Wadjiginy","puq":"Puquina","pur":"Tarascan","put":"Uto-Aztecan","pwn":"Caddoan","qaf":"Afro-Asiatic","qan":"Quechuan","qaw":"Kawesqar","qay":"Quechuan","qbo":"Quechuan","qca":"Quechuan","qch":"Mayan","qco":"Quechuan","qcu":"Quechuan","qec":"Quechuan","qhu":"Quechuan","qia":"Sino-Tibetan","qim":"Quechuan","qta":"Quechuan","que":"Cochimi-Yuman","qui":"Chimakuan","qum":"Mayan","rad":"Austronesian","rag":"Austronesian","ral":"Sino-Tibetan","ram":"Chibchan","rao":"Ramu","rap":"Austronesian","ras":"Rashad","rav":"Indo-European","raw":"Sino-Tibetan","rbg":"Indo-European","rbu":"Indo-European","rcp":"Pidgin","rej":"Austronesian","rem":"Austroasiatic","ren":"Afro-Asiatic","res":"Arawakan","ret":"Tucanoan","rga":"Atlantic-Congo","rgc":"Sino-Tibetan","rgn":"Austronesian","ria":"Kolopom","rik":"Nuclear-Macro-Je","rim":"Atlantic-Congo","rit":"Pama-Nyungan","rji":"Sino-Tibetan","rka":"Indo-European","rlo":"Indo-European","rmb":"Gunwinyguan","rmc":"Indo-European","rnd":"Atlantic-Congo","rng":"Austroasiatic","rnn":"Austronesian","rnr":"Indo-European","rny":"Atlantic-Congo","rom":"Indo-European","ron":"Afro-Asiatic","ror":"Austronesian","rot":"Austronesian","rov":"Austronesian","rpa":"Sino-Tibetan","rru":"Atlantic-Congo","rsc":"Indo-European","rse":"Indo-European","rsh":"Indo-European","rsl":"Sign Language","rsm":"Indo-European","rsu":"Indo-European","rti":"Austronesian","rtk":"North Bougainville","ruk":"Austronesian","rum":"Turama-Kikori","run":"Maban","rus":"Indo-European","rut":"Nakh-Daghestanian","rwa":"Nuclear Trans New Guinea","rwe":"Indo-European","ryu":"Japonic","saa":"Austronesian","sab":"Austronesian","sae":"Tai-Kadai","sah":"North Halmahera","sak":"Austronesian","sal":"Salinan","sam":"Austronesian","san":"Atlantic-Congo","sao":"Afro-Asiatic","sap":"Austroasiatic","sar":"Sepik","sav":"Indo-European","saw":"Austronesian","say":"Mixe-Zoque","sba":"Saliban","sbg":"Austronesian","sch":"Salishan","scr":"Indo-European","scs":"Uralic","sdh":"Indo-European","sdw":"Sandawe","sea":"Austronesian","seb":"Nilotic","sec":"Tucanoan","sed":"Austroasiatic","see":"Austronesian","sel":"Chonan","sem":"Sino-Tibetan","sen":"Atlantic-Congo","ser":"Seri","ses":"Atlantic-Congo","sey":"Indo-European","sgb":"East Bird's Head","sge":"Atlantic-Congo","sgl":"Atlantic-Congo","sgr":"Austronesian","sgs":"Salishan","sgu":"Atlantic-Congo","sha":"Tai-Kadai","shb":"Shabo","shd":"Sino-Tibetan","she":"Sino-Tibetan","shh":"Pano-Tacanan","shi":"Yanomamic","shk":"Pano-Tacanan","shl":"Nilotic","shm":"Atlantic-Congo","shn":"Atlantic-Congo","sho":"Uto-Aztecan","shp":"Sahaptian","shr":"Turkic","shs":"Shastan","sht":"Dajuic","shu":"Salishan","shw":"Algic","shy":"Mongolic-Khitan","sia":"Nuclear Trans New Guinea","sid":"Afro-Asiatic","sik":"Austronesian","sil":"Dajuic","sim":"Austronesian","sin":"Tucanoan","sio":"Austronesian","sir":"Austronesian","sis":"Austronesian","siu":"Siuslaw","ski":"Uralic","skk":"Sino-Tibetan","skl":"Austronesian","skm":"Atlantic-Congo","sko":"Sko","skp":"Uralic","skr":"Lakes Plain","sku":"Atlantic-Congo","skw":"Indo-European","sla":"Athabaskan-Eyak-Tlingit","slb":"Austronesian","sle":"Atlantic-Congo","slg":"Sino-Tibetan","slo":"Indo-European","slp":"Nuclear Trans New Guinea","slr":"Turkic","slv":"Athabaskan-Eyak-Tlingit","sly":"Austronesian","smd":"Austronesian","sme":"Siamou","smj":"Austroasiatic","sml":"Austroasiatic","smn":"Muskogean","smp":"Shom Peng","smt":"Sahaptian","sna":"Indo-European","snc":"Iroquoian","snd":"Atlantic-Congo","sng":"Austronesian","snh":"Indo-European","snm":"Yanomamic","snn":"Mande","sno":"Uralic","snt":"Sentanic","so":"Kuliak","sob":"Austronesian","sod":"Afro-Asiatic","sol":"Tungusic","som":"Afro-Asiatic","son":"Austronesian","soo":"Salishan","soq":"Afro-Asiatic","sor":"Austroasiatic","sou":"Indo-European","spa":"Indo-European","spc":"Indo-European","spi":"Sino-Tibetan","spo":"Salishan","sps":"Salishan","squ":"Salishan","sra":"Indo-European","srb":"Indo-European","src":"Athabaskan-Eyak-Tlingit","srd":"Indo-European","sre":"Austroasiatic","sri":"Tucanoan","srl":"Indo-European","srm":"Indo-European","srn":"Tupian","sro":"Nuclear Trans New Guinea","srr":"Uto-Aztecan","sru":"Austronesian","sry":"Austronesian","ssa":"Atlantic-Congo","ssh":"Ta-Ne-Omotic","ssl":"Sign Language","sss":"Salishan","sst":"Salishan","sta":"Mongolic-Khitan","sti":"Austroasiatic","stl":"Austroasiatic","stn":"Atlantic-Congo","sto":"Siouan","sub":"Atlantic-Congo","sud":"Austronesian","sue":"Nuclear Trans New Guinea","sug":"Tamaic","sui":"Tai-Kadai","suk":"Suki-Gogodala","sul":"Sulka","sum":"Misumalpan","sun":"Austronesian","sup":"Atlantic-Congo","sur":"Austronesian","sus":"Mande","sva":"Kartvelian","svc":"Indo-European","svk":"Indo-European","svs":"Savosavo","svt":"Sign Language","swa":"Atlantic-Congo","swe":"Indo-European","swi":"Austronesian","swr":"Uto-Aztecan","swt":"Atlantic-Congo","swv":"Indo-European","syg":"Turkic","syu":"Nuclear Trans New Guinea","tab":"Austronesian","tac":"Pano-Tacanan","taf":"Austronesian","tag":"Austronesian","tah":"Austronesian","tai":"Afro-Asiatic","taj":"Indo-European","tak":"Austronesian","tal":"Atlantic-Congo","tam":"Sino-Tibetan","tan":"Afro-Asiatic","tao":"Sino-Tibetan","tap":"Taiap","tar":"Arawakan","tas":"Afro-Asiatic","tat":"Austronesian","tau":"Nuclear Trans New Guinea","taw":"Austronesian","tay":"Indo-European","taz":"Indo-European","tba":"Nuclear Trans New Guinea","tbb":"Uto-Aztecan","tbe":"Afro-Asiatic","tbl":"Sentanic","tbo":"Austronesian","tbr":"North Halmahera","tbs":"Nakh-Daghestanian","tbt":"Austronesian","tbu":"Saharan","tbw":"Atlantic-Congo","tbx":"Sino-Tibetan","tce":"Uto-Aztecan","tda":"Dravidian","tdi":"Sino-Tibetan","tdr":"Sino-Tibetan","tec":"Mayan","tee":"Totonacan","teh":"Chonan","tel":"Dravidian","tem":"Atlantic-Congo","ten":"Surmic","teo":"Austronesian","tep":"Totonacan","ter":"Afro-Asiatic","tes":"Nilotic","tet":"Atlantic-Congo","tew":"Kiowa-Tanoan","tex":"Turkic","tga":"Austronesian","tgb":"Austronesian","tgh":"Afro-Asiatic","tgk":"Austronesian","tgl":"Sino-Tibetan","tgn":"Austronesian","tgo":"Atlantic-Congo","tgp":"Timor-Alor-Pantar","tgr":"Afro-Asiatic","tgw":"Austronesian","tha":"Tai-Kadai","thd":"Sino-Tibetan","thk":"Sino-Tibetan","thn":"Sino-Tibetan","tho":"Salishan","thp":"Pama-Nyungan","ths":"Sign Language","tht":"West Bird's Head","thu":"Sino-Tibetan","thw":"Austronesian","thy":"Pama-Nyungan","tia":"Katla-Tima","tib":"Sino-Tibetan","tic":"Ticuna-Yuri","tid":"North Halmahera","tif":"Nuclear Trans New Guinea","tig":"Afro-Asiatic","tik":"Atlantic-Congo","til":"Salishan","tim":"Austronesian","tin":"Austronesian","tir":"Cariban","tis":"Sino-Tibetan","tiv":"Atlantic-Congo","tiw":"Tiwi","tja":"Cochimi-Yuman","tke":"Austronesian","tki":"Atlantic-Congo","tkl":"Takelma","tkm":"Turkic","tks":"Atlantic-Congo","tla":"Austronesian","tlb":"Turkic","tld":"Austronesian","tlf":"Nuclear Trans New Guinea","tli":"Athabaskan-Eyak-Tlingit","tll":"Taulil-Butam","tlo":"North Halmahera","tlp":"Otomanguean","tls":"Indo-European","tma":"Tamaic","tmc":"Timucua","tmg":"Kayagaric","tmi":"Turkic","tmk":"Afro-Asiatic","tml":"Dravidian","tmm":"Austronesian","tmn":"Temeinic","tmo":"Sino-Tibetan","tmp":"Atlantic-Congo","tmr":"Austroasiatic","tms":"Dogon","tmu":"Indo-European","tna":"Nilotic","tnb":"Chibchan","tnc":"Athabaskan-Eyak-Tlingit","tnd":"Nakh-Daghestanian","tne":"Atlantic-Congo","tng":"Austronesian","tni":"Sino-Tibetan","tnj":"Athabaskan-Eyak-Tlingit","tnk":"Austronesian","tnl":"Athabaskan-Eyak-Tlingit","tnn":"Atlantic-Congo","tno":"Austronesian","tns":"Austronesian","tnt":"Austronesian","tny":"Atlantic-Congo","toa":"Eleman","tob":"Guaicuruan","tod":"Sino-Tibetan","tof":"Turkic","toj":"Mayan","tok":"Atlantic-Congo","tol":"Jicaquean","ton":"Tonkawa","toq":"Austronesian","tor":"Austronesian","tos":"Totonacan","tot":"Totonacan","tou":"Atlantic-Congo","toy":"Oyster Bay-Big River-Little Swanport","toz":"Atlantic-Congo","tpa":"Totonacan","tpc":"Uto-Aztecan","tpi":"Indo-European","tpn":"Uto-Aztecan","tpr":"Atlantic-Congo","tps":"Uto-Aztecan","tpt":"Tupian","trb":"Chibchan","trc":"Otomanguean","trd":"Austronesian","trg":"Kiowa-Tanoan","tri":"Otomanguean","trm":"Surmic","trn":"Arawakan","trr":"Nuclear Trans New Guinea","trt":"North Halmahera","tru":"Trumai","trw":"Indo-European","try":"Austronesian","tsa":"Nakh-Daghestanian","tse":"Austronesian","tsf":"Barbacoan","tsg":"Austronesian","tsh":"Uto-Aztecan","tsi":"Tsimshian","tsj":"Kiowa-Tanoan","tsk":"Afro-Asiatic","tsl":"Sign Language","tsm":"Tasmanian","tsn":"Atlantic-Congo","tso":"Austronesian","tsp":"Dravidian","tsr":"Taushiro","tst":"Austronesian","tsw":"Atlantic-Congo","tsz":"Nakh-Daghestanian","ttb":"Turkic","ttd":"Austronesian","tte":"Siouan","ttn":"Austronesian","tts":"Indo-European","ttu":"Nakh-Daghestanian","tty":"Tucanoan","tua":"Austronesian","tub":"Uto-Aztecan","tuc":"Tucanoan","tug":"Afro-Asiatic","tui":"Sign Language","tuk":"Austronesian","tul":"Dravidian","tum":"Austronesian","tun":"Tunica","tup":"Tupian","tur":"Turkic","tus":"Iroquoian","tut":"Athabaskan-Eyak-Tlingit","tuv":"Turkic","tuy":"Tucanoan","tvl":"Austronesian","tvo":"Turkic","tvt":"Sino-Tibetan","twa":"Salishan","twe":"Uto-Aztecan","twn":"Kiowa-Tanoan","tws":"Kiowa-Tanoan","twx":"Turkic","txj":"Totonacan","tye":"Northern Daly","tza":"Mayan","tze":"Mayan","tzi":"Sign Language","tzo":"Mayan","tzt":"Mayan","tzu":"Mayan","uby":"Abkhaz-Adyge","udh":"Tungusic","udi":"Nakh-Daghestanian","udm":"Uralic","ugs":"Sign Language","uhi":"Pama-Nyungan","ukr":"Indo-European","uku":"Athabaskan-Eyak-Tlingit","ulc":"Tungusic","uld":"Afro-Asiatic","uli":"Austronesian","uma":"Austronesian","umb":"Atlantic-Congo","ump":"Pama-Nyungan","umu":"Cariban","una":"Nuclear Trans New Guinea","ung":"Worrorran","unm":"Algic","ura":"Austronesian","urd":"Indo-European","urh":"Atlantic-Congo","uri":"Nuclear Torricelli","urk":"Tupian","url":"Austronesian","urm":"Turkic","urn":"Urarina","urt":"Nuclear Torricelli","uru":"Uru-Chipaya","usa":"Nuclear Trans New Guinea","usl":"Sign Language","usr":"Nuclear Trans New Guinea","ute":"Uto-Aztecan","uyg":"Turkic","uzb":"Turkic","uzn":"Turkic","vaf":"Indo-European","vag":"Atlantic-Congo","vai":"Mande","vas":"Indo-European","vat":"Kru","ved":"Indo-European","ven":"Atlantic-Congo","vep":"Uralic","vie":"Austroasiatic","vif":"Atlantic-Congo","vka":"Pama-Nyungan","vla":"Sign Language","vnm":"Austronesian","vot":"Uralic","wag":"Wageman","wah":"Nuclear Trans New Guinea","wai":"Cariban","wak":"Indo-European","wal":"Nuclear Torricelli","wam":"Mirndi","wan":"Pama-Nyungan","wao":"Waorani","wap":"Yuki-Wappo","war":"Chapacuran","was":"Washo","wat":"Pama-Nyungan","wau":"Chocoan","way":"Tupian","wbn":"Nuclear Trans New Guinea","wbt":"Pama-Nyungan","wch":"Mataguayan","wdo":"Pama-Nyungan","wec":"Indo-European","wed":"Austronesian","wel":"Indo-European","wem":"Pama-Nyungan","wer":"Kunimaipan","wet":"Austronesian","wgg":"Pama-Nyungan","wgl":"Indo-European","wgu":"Pama-Nyungan","wic":"Caddoan","wik":"Yokutsan","win":"Wintuan","wir":"Pama-Nyungan","wiy":"Algic","wkw":"Pama-Nyungan","wlf":"Atlantic-Congo","wll":"Austronesian","wlm":"Pama-Nyungan","wlo":"Austronesian","wlw":"Pama-Nyungan","wly":"Ta-Ne-Omotic","wma":"North Halmahera","wme":"Sino-Tibetan","wmn":"Atlantic-Congo","wmu":"Pama-Nyungan","wn":"Pama-Nyungan","wna":"Mande","wnb":"Siouan","wnt":"Nuclear Trans New Guinea","wob":"Kru","wog":"Sepik","woi":"Timor-Alor-Pantar","wol":"Austronesian","wom":"Sko","wor":"Worrorran","wps":"Arawakan","wra":"Warao","wrb":"Pama-Nyungan","wrd":"Yangmanic","wrg":"Pama-Nyungan","wrk":"Arawakan","wrl":"Pama-Nyungan","wrm":"Austronesian","wrn":"Mangarrayi-Maran","wrp":"Austronesian","wrs":"Border","wru":"Pama-Nyungan","wrw":"Nyulnyulan","wry":"Gunwinyguan","wsk":"Nuclear Trans New Guinea","wth":"Pama-Nyungan","wtm":"Ramu","wuc":"Sino-Tibetan","wur":"Arawakan","wwa":"Atlantic-Congo","wwr":"Pama-Nyungan","wwy":"Austronesian","wya":"Iroquoian","wyn":"Cariban","xam":"Tuu","xar":"Austronesian","xas":"Mande","xav":"Nuclear-Macro-Je","xbi":"Nuclear Torricelli","xer":"Nuclear-Macro-Je","xho":"Atlantic-Congo","xns":"Sino-Tibetan","xok":"Nuclear-Macro-Je","xoo":"Tuu","xun":"Kxa","yag":"Peba-Yagua","yah":"Yámana","yak":"Atlantic-Congo","yal":"Nuclear Trans New Guinea","yam":"Pano-Tacanan","yan":"Yana","yao":"Atlantic-Congo","yap":"Austronesian","yaq":"Uto-Aztecan","yar":"Yareban","yav":"Cochimi-Yuman","yaw":"Yawa-Saweru","yay":"Tai-Kadai","yaz":"Indo-European","yba":"Atlantic-Congo","ybi":"Sino-Tibetan","ych":"Eskimo-Aleut","ycn":"Arawakan","yct":"Mayan","ydb":"Indo-European","ydd":"Indo-European","ydl":"Indo-European","yei":"Yam","yel":"Yele","yem":"Atlantic-Congo","yes":"Sepik","yey":"Atlantic-Congo","ygd":"Atlantic-Congo","ygn":"Indo-European","ygr":"Nuclear Trans New Guinea","yi":"Sino-Tibetan","yid":"Pama-Nyungan","yil":"Nuclear Torricelli","yim":"Lower Sepik","yin":"Pama-Nyungan","yir":"Pama-Nyungan","yiw":"Sino-Tibetan","yki":"Yuki-Wappo","ykm":"Atlantic-Congo","ykn":"Austronesian","yko":"Yukaghir","ykp":"Cariban","ykt":"Turkic","ylb":"Pama-Nyungan","yli":"Nuclear Trans New Guinea","ylm":"Bulaka River","ylr":"Pama-Nyungan","ylt":"Indo-European","ymd":"Austronesian","ymi":"Austronesian","yms":"Ta-Ne-Omotic","yna":"Eskimo-Aleut","yng":"Pama-Nyungan","ynk":"Pama-Nyungan","ynm":"Yanomamic","yns":"Atlantic-Congo","yny":"Pama-Nyungan","yok":"Yokutsan","yor":"Atlantic-Congo","ypk":"Eskimo-Aleut","yqy":"Anim","yrc":"Yuracaré","yrm":"Yurumanguí","yrr":"Pumé","yrt":"Tucanoan","ysi":"Eskimo-Aleut","ysl":"Eskimo-Aleut","yta":"Turkic","ytu":"Yukaghir","yuc":"Yuchi","yug":"Yeniseian","yuk":"Tangkic","yul":"Central Sudanic","yun":"Eskimo-Aleut","yur":"Algic","yus":"Eskimo-Aleut","yuw":"Pama-Nyungan","ywl":"Yokutsan","ywr":"Nyulnyulan","yyg":"Pama-Nyungan","yyo":"Pama-Nyungan","yzv":"Uralic","zag":"Saharan","zai":"Otomanguean","zaj":"Otomanguean","zam":"Otomanguean","zan":"Atlantic-Congo","zap":"Otomanguean","zaq":"Otomanguean","zar":"Songhay","zay":"Ta-Ne-Omotic","zaz":"Indo-European","zch":"Mixe-Zoque","zen":"Afro-Asiatic","zfl":"Mixe-Zoque","zhn":"Tai-Kadai","zim":"Anim","zno":"Atlantic-Congo","zpi":"Otomanguean","zpr":"Zaparoan","zqc":"Mixe-Zoque","zqo":"Mixe-Zoque","zqr":"Mixe-Zoque","zqs":"Mixe-Zoque","zso":"Atlantic-Congo","zsq":"Otomanguean","zte":"Otomanguean","zul":"Atlantic-Congo","zun":"Zuni","zya":"Otomanguean","zzo":"Otomanguean"};
 
 // ═══════════════════════════════════════════════════════════════
 // STATE
@@ -642,7 +649,8 @@ const Stats = {
   computeMoranI(languages, featureValue, k=5) {
     const n = languages.length;
     if (n < k + 1) return {I:NaN, z:NaN, p:NaN};
-    const x = languages.map(l => l.value === featureValue ? 1 : 0);
+    const matchSet = featureValue instanceof Set ? featureValue : new Set([featureValue]);
+    const x = languages.map(l => matchSet.has(l.value) ? 1 : 0);
     const xMean = x.reduce((a,b) => a+b, 0) / n;
     if (xMean === 0 || xMean === 1) return {I:0, z:0, p:1};
     // Distance matrix
@@ -674,14 +682,28 @@ const Stats = {
     S1 /= 2;
     let S2 = 0;
     for (let i = 0; i < n; i++) { let ri = 0, ci = 0; for (let j = 0; j < n; j++) { ri += w[i][j]; ci += w[j][i]; } S2 += (ri + ci) ** 2; }
-    const varI = (n * ((n*n - 3*n + 3)*S1 - n*S2 + 3*W*W) - (n*n - n) * (2*n*S1 - n*S2 + 6*W*W)) / ((n-1)*(n-2)*(n-3)*W*W) - EI*EI;
+    // Compute kurtosis (b2) from the data
+    const m2 = den / n;
+    let m4 = 0;
+    for (let i = 0; i < n; i++) m4 += (x[i] - xMean) ** 4;
+    m4 /= n;
+    const b2 = m2 > 0 ? m4 / (m2 * m2) : 0;
+    const varI = (n * ((n*n - 3*n + 3)*S1 - n*S2 + 3*W*W) - b2 * ((n*n - n)*S1 - 2*n*S2 + 6*W*W)) / ((n-1)*(n-2)*(n-3)*W*W) - EI*EI;
     const z = varI > 0 ? (I - EI) / Math.sqrt(varI) : 0;
     return {I: Math.round(I*1000)/1000, z: Math.round(z*100)/100, p: 2*(1-Stats.normalCDF(Math.abs(z)))};
   },
-  computePhyloControl(languages, featureValue) {
+  computePhyloControl(languages, featureValue, classification='wals') {
     const families = {};
+    let excludedCount = 0;
     languages.forEach(l => {
-      const f = l.family || 'Isolate/Unknown';
+      let f;
+      if (classification === 'glottolog') {
+        // Use WALS code (l.id) to look up Glottolog family
+        f = GLOTTOLOG_LOOKUP[l.id];
+        if (!f) { excludedCount++; return; }  // Skip languages not in Glottolog lookup
+      } else {
+        f = l.family || 'Isolate/Unknown';
+      }
       if (!families[f]) families[f] = {total:0, inRef:0, hasFeature:false};
       families[f].total++;
       if (Stats.isInAnyRefugia(l)) families[f].inRef++;
@@ -695,7 +717,7 @@ const Stats = {
       {name:'Strong (≥75%)', test:f => f.inRef / f.total >= 0.75},
       {name:'Endemic (100%)', test:f => f.inRef === f.total},
     ];
-    return thresholds.map(th => {
+    const results = thresholds.map(th => {
       const bc = allF.filter(([_,f]) => th.test(f)).length, bp = bc / totalF;
       const fc = featF.filter(([_,f]) => th.test(f)).length, fp = featF.length > 0 ? fc / featF.length : 0;
       const enr = bp > 0 ? fp / bp : 0, n = featF.length, p = bp;
@@ -703,6 +725,10 @@ const Stats = {
       const mean = n * p, std = Math.sqrt(n * p * (1-p)), z = std > 0 ? (fc - 0.5 - mean) / std : 0;
       return {name:th.name, baselinePct:bp, featurePct:fp, featureCount:fc, featureTotal:n, enrichment:enr, pValue: 1 - Stats.normalCDF(z)};
     });
+    results._excludedCount = excludedCount;
+    results._totalFamilies = totalF;
+    results._classification = classification;
+    return results;
   },
   chiSquare(a,b,c,d) {
     const n = a+b+c+d;
@@ -1151,7 +1177,12 @@ const UI = {
     const chapter = State.currentChapter ? State.loadedChapters[State.currentChapter] : null;
     
     // Track collapsed state across re-renders
-    if (!State._collapsedGroups) State._collapsedGroups = new Set();
+    if (!State._collapsedGroups) {
+      State._collapsedGroups = new Set();
+      for (const tierKey of Object.keys(TIER_STRUCTURE)) State._collapsedGroups.add(tierKey);
+      const geoGroupNames = new Set(PREDEFINED_REGIONS.map(r => r.group || 'Other'));
+      for (const g of geoGroupNames) State._collapsedGroups.add('geo_' + g.replace(/[^a-zA-Z]/g, '_'));
+    }
 
     // ═══════════════════════════════════════════════════════════════
     // TIER-BASED VIEW (Refugia Hypothesis)
@@ -1225,6 +1256,41 @@ const UI = {
       tierRegions.forEach(r => body.appendChild(UI._mkToggle(r, chapter)));
       container.appendChild(body);
     }
+    
+    // ── Bulk tier controls ──
+    const tierControls = document.createElement('div');
+    tierControls.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;padding:6px 0 2px;margin-top:4px;border-top:1px solid var(--card-border);font-size:11px;';
+
+    const mkBulkBtn = (label, tierKeys) => {
+      const btn = document.createElement('a');
+      btn.href = '#';
+      btn.textContent = label;
+      btn.style.cssText = 'color:var(--accent);text-decoration:none;';
+      btn.onmouseover = () => btn.style.textDecoration = 'underline';
+      btn.onmouseout = () => btn.style.textDecoration = 'none';
+      btn.onclick = (e) => {
+        e.preventDefault();
+        const targetIds = new Set();
+        tierKeys.forEach(tk => { if (TIER_STRUCTURE[tk]) TIER_STRUCTURE[tk].regions.forEach(id => targetIds.add(id)); });
+        State.regions.forEach(r => {
+          const shouldEnable = targetIds.has(r.id);
+          r.enabled = shouldEnable;
+          MapManager.setRegionVisible(r.id, shouldEnable);
+        });
+        if (chapter) { MapManager.renderLanguages(chapter); App.updateAnalysis(); }
+        UI.renderRegionToggles();
+      };
+      return btn;
+    };
+
+    tierControls.appendChild(mkBulkBtn('All tiers', ['tier1','tier2','tier3','tier4','tier5']));
+    tierControls.appendChild(document.createTextNode('·'));
+    tierControls.appendChild(mkBulkBtn('None', []));
+    tierControls.appendChild(document.createTextNode('·'));
+    tierControls.appendChild(mkBulkBtn('Refugia (1–3)', ['tier1','tier2','tier3']));
+    tierControls.appendChild(document.createTextNode('·'));
+    tierControls.appendChild(mkBulkBtn('Non-refugia (4–5)', ['tier4','tier5']));
+    container.appendChild(tierControls);
 
     // ═══════════════════════════════════════════════════════════════
     // GEOGRAPHIC VIEW (Traditional grouping)
@@ -1431,7 +1497,7 @@ const UI = {
     const el = document.getElementById('enrichmentResults');
     if (!result || !chapter) { el.innerHTML = '<div class="empty-state"><p>Upload and select a chapter.</p></div>'; return; }
     const bp = (result.baseline * 100).toFixed(1);
-    const showBreakdown = document.getElementById('cbBreakdown')?.checked ?? true; // Default to checked
+    const showBreakdown = document.getElementById('cbBreakdown')?.checked ?? false; // Default to checked
 
     // Build header
     let html = `<div class="enrichment-controls">
@@ -1613,17 +1679,36 @@ const UI = {
     let html = `<table class="stats-table"><tr><th>Feature Value</th><th class="num">I</th><th class="num">z</th><th class="num">p</th></tr>`;
     const keys = chapter.codeOrder.length ? chapter.codeOrder : Object.keys(results);
     keys.forEach(code => {
+      if (code.startsWith('__composite__')) return;
       const r = results[code]; if (!r) return;
       const pStr = isNaN(r.p) ? '—' : (r.p < 0.001 ? '<.001' : r.p.toFixed(4));
       const sig = !isNaN(r.p) && r.p < 0.05 ? 'enriched' : 'neutral-val';
       html += `<tr><td>${chapter.codes[code]||code}</td><td class="num">${isNaN(r.I)?'—':r.I.toFixed(3)}</td><td class="num">${isNaN(r.z)?'—':r.z.toFixed(2)}</td><td class="num ${sig}">${pStr}</td></tr>`;
     });
-    el.innerHTML = html + '</table>';
+    State.compositeRows.forEach((cr, idx) => {
+      const r = results['__composite__' + idx]; if (!r) return;
+      const pStr = isNaN(r.p) ? '—' : (r.p < 0.001 ? '<.001' : r.p.toFixed(4));
+      const sig = !isNaN(r.p) && r.p < 0.05 ? 'enriched' : 'neutral-val';
+      html += `<tr class="composite-row"><td><em>${cr.name}</em></td><td class="num">${isNaN(r.I)?'—':r.I.toFixed(3)}</td><td class="num">${isNaN(r.z)?'—':r.z.toFixed(2)}</td><td class="num ${sig}">${pStr}</td></tr>`;
+    });
+    html += '</table>';
+    if (State.compositeRows.length === 0) {
+      html += `<div style="margin-top:6px;font-size:11px;color:var(--text-muted)">Tip: combine values in Enrichment Analysis to compute Moran's I for composite categories.</div>`;
+    }
+    html += `<div style="margin-top:6px"><button class="btn-sm" onclick="App.copyMoranTable()">📋 Copy Table</button></div>`;
+    el.innerHTML = html;
   },
 
   renderPhylo(results, featureValue, chapter) {
     const el = document.getElementById('phyloResults');
-    let html = `<div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Feature: <strong>${chapter.codes[featureValue]||featureValue}</strong> · ${results[0]?.featureTotal||0} families</div>`;
+    const classification = results._classification || 'wals';
+    const excluded = results._excludedCount || 0;
+    const totalF = results._totalFamilies || (results[0]?.featureTotal || 0);
+    const classLabel = classification === 'glottolog' ? 'Glottolog' : 'WALS';
+    const exclNote = (classification === 'glottolog' && excluded > 0)
+      ? ` · ${excluded} language${excluded===1?'':'s'} excluded (no Glottolog mapping)`
+      : '';
+    let html = `<div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Feature: <strong>${chapter.codes[featureValue]||featureValue}</strong> · ${results[0]?.featureTotal||0} families with feature · ${totalF} total ${classLabel} families${exclNote}</div>`;
     html += `<table class="stats-table"><tr><th>Threshold</th><th class="num">Base</th><th class="num">Feature</th><th class="num">E×</th><th class="num">p</th></tr>`;
     results.forEach(r => {
       const pStr = r.pValue < 0.0001 ? '<.0001' : r.pValue.toFixed(4);
@@ -1631,11 +1716,11 @@ const UI = {
       html += `<tr><td>${r.name}</td><td class="num">${(r.baselinePct*100).toFixed(1)}%</td><td class="num">${(r.featurePct*100).toFixed(1)}% (${r.featureCount}/${r.featureTotal})</td><td class="num ${cls}">${r.enrichment.toFixed(2)}×</td><td class="num ${cls}">${pStr}</td></tr>`;
     });
     html += '</table>';
-    html += `<div style="margin-top:8px;font-size:11px;color:var(--text-muted)">Analyze: <select id="phyloValueSelect" onchange="App.computePhylo()" style="font-size:11px;font-family:var(--font-mono)">`;
+    html += `<div style="margin-top:8px;font-size:11px;color:var(--text-muted)">Classification: <select id="phyloClassification" onchange="App.computePhylo()" style="font-size:11px;font-family:var(--font-mono)"><option value="wals" ${classification==='wals'?'selected':''}>WALS</option><option value="glottolog" ${classification==='glottolog'?'selected':''}>Glottolog</option></select> · Analyze: <select id="phyloValueSelect" onchange="App.computePhylo()" style="font-size:11px;font-family:var(--font-mono)">`;
     (chapter.codeOrder.length ? chapter.codeOrder : Object.keys(chapter.codes)).forEach(code => {
       html += `<option value="${code}" ${code===featureValue?'selected':''}>${chapter.codes[code]||code}</option>`;
     });
-    el.innerHTML = html + '</select></div>';
+    el.innerHTML = html + '</select> <button class="btn-sm" onclick="App.copyPhyloTable()" style="margin-left:8px">📋 Copy Table</button></div>';
   },
 
   renderCooc(results) {
@@ -1650,7 +1735,7 @@ const UI = {
       const cls = r.comboPct > 0.6 ? 'enriched' : (r.comboPct < 0.4 ? 'depleted' : 'neutral-val');
       html += `<tr><td style="font-size:10px">${r.label1}<br>+ ${r.label2}</td><td class="num">${r.comboN}</td><td class="num ${cls}">${rp}%</td><td class="num">${r.chi2}</td><td class="num">${pStr}</td></tr>`;
     });
-    el.innerHTML = html + '</table>';
+    el.innerHTML = html + '</table><div style="margin-top:6px"><button class="btn-sm" onclick="App.copyCoocTable()">📋 Copy Table</button></div>';
   },
 
   renderSensitivity() {
@@ -1865,6 +1950,10 @@ const App = {
       (ch.codeOrder.length ? ch.codeOrder : Object.keys(ch.codes)).forEach(code => {
         results[code] = Stats.computeMoranI(ch.languages, code, CONFIG.moranK);
       });
+      // Composite rows
+      State.compositeRows.forEach((cr, idx) => {
+        results['__composite__' + idx] = Stats.computeMoranI(ch.languages, cr.codes, CONFIG.moranK);
+      });
       UI.renderMoran(results, ch);
       btn.classList.remove('running'); btn.textContent = "Compute Moran's I";
     }, 50);
@@ -1874,10 +1963,12 @@ const App = {
     const ch = State.loadedChapters[State.currentChapter]; if (!ch) return;
     const sel = document.getElementById('phyloValueSelect');
     const fv = sel ? sel.value : (ch.codeOrder[0] || Object.keys(ch.codes)[0]);
+    const classSel = document.getElementById('phyloClassification');
+    const classification = classSel ? classSel.value : 'wals';
     const btn = document.getElementById('btnPhylo');
     btn.classList.add('running'); btn.textContent = 'Computing...';
     setTimeout(() => {
-      UI.renderPhylo(Stats.computePhyloControl(ch.languages, fv), fv, ch);
+      UI.renderPhylo(Stats.computePhyloControl(ch.languages, fv, classification), fv, ch);
       btn.classList.remove('running'); btn.textContent = 'Compute Phylogenetic Control';
     }, 50);
   },
@@ -2061,6 +2152,7 @@ const App = {
     });
     
     html += '</table>';
+    html += '<div style="margin-top:6px"><button class="btn-sm" onclick="App.copyCoocLangList()">📋 Copy Language List</button></div>';
     listContainer.innerHTML = html;
   },
 
@@ -2073,7 +2165,49 @@ const App = {
     UI.setStatus(`📸 Snapshot: ${label}`);
   },
 
-  clearSnapshots() { State.snapshots = []; UI.renderSensitivity(); }
+  clearSnapshots() { State.snapshots = []; UI.renderSensitivity(); },
+
+  copyPhyloTable() {
+    const el = document.getElementById('phyloResults');
+    if (!el?.querySelector('table')) { UI.setStatus('⚠ Nothing to copy'); return; }
+    let tsv = '';
+    const info = el.querySelector('div');
+    if (info) tsv += info.textContent.trim() + '\n';
+    el.querySelectorAll('table tr').forEach(row => {
+      tsv += [...row.querySelectorAll('th,td')].map(c => c.textContent.trim()).join('\t') + '\n';
+    });
+    navigator.clipboard.writeText(tsv).then(() => UI.setStatus('📋 Phylogenetic table copied')).catch(() => UI.setStatus('⚠ Copy failed'));
+  },
+
+  copyMoranTable() {
+    const el = document.getElementById('moranResults');
+    if (!el?.querySelector('table')) { UI.setStatus('⚠ Nothing to copy'); return; }
+    let tsv = '';
+    el.querySelectorAll('tr').forEach(row => {
+      tsv += [...row.querySelectorAll('th,td')].map(c => c.textContent.trim()).join('\t') + '\n';
+    });
+    navigator.clipboard.writeText(tsv).then(() => UI.setStatus("📋 Moran's I table copied")).catch(() => UI.setStatus('⚠ Copy failed'));
+  },
+
+  copyCoocTable() {
+    const el = document.getElementById('coocResults');
+    if (!el?.querySelector('table')) { UI.setStatus('⚠ Nothing to copy'); return; }
+    let tsv = '';
+    el.querySelectorAll('tr').forEach(row => {
+      tsv += [...row.querySelectorAll('th,td')].map(c => c.textContent.trim()).join('\t') + '\n';
+    });
+    navigator.clipboard.writeText(tsv).then(() => UI.setStatus('📋 Co-occurrence table copied')).catch(() => UI.setStatus('⚠ Copy failed'));
+  },
+
+  copyCoocLangList() {
+    const el = document.getElementById('coocLanguageList');
+    if (!el?.querySelector('table')) { UI.setStatus('⚠ Nothing to copy'); return; }
+    let tsv = '';
+    el.querySelectorAll('tr').forEach(row => {
+      tsv += [...row.querySelectorAll('th,td')].map(c => c.textContent.trim()).join('\t') + '\n';
+    });
+    navigator.clipboard.writeText(tsv).then(() => UI.setStatus('📋 Language list copied')).catch(() => UI.setStatus('⚠ Copy failed'));
+  }
 };
 
 document.addEventListener('DOMContentLoaded', () => App.init());
