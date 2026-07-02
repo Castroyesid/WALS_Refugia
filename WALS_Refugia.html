@@ -162,6 +162,15 @@ select option { background:#1a1f2e; color:#e8e6df; }
         </div>
       </div>
 
+      <!-- TREND -->
+      <div class="section">
+        <div class="section-header" onclick="UI.toggleSection('trend')">Cochran-Armitage Trend Test <span class="arrow" id="arrowTrend">▼</span></div>
+        <div class="section-body collapsed" id="bodyTrend">
+          <div id="trendResults"><div class="empty-state"><p>Test whether feature proportions show a significant monotonic gradient across tiers. Tip: combine values in Enrichment Analysis to include composite categories.</p></div></div>
+          <div class="analysis-actions"><button class="btn-sm btn-primary" id="btnTrend" onclick="App.computeTrend()" disabled>Compute Trend Test</button></div>
+        </div>
+      </div>
+
       <!-- SENSITIVITY -->
       <div class="section">
         <div class="section-header" onclick="UI.toggleSection('sensitivity')">Sensitivity Analysis <span class="arrow" id="arrowSensitivity">▼</span></div>
@@ -569,6 +578,7 @@ const State = {
   snapshots: [],
   hiddenValues: new Set(),  // feature values hidden via legend checkboxes
   compositeRows: [],       // [{name, codes: Set}] user-defined composite feature groups
+  phyloResults: {},  // keyed by chapter ID
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -692,6 +702,56 @@ const Stats = {
     const z = varI > 0 ? (I - EI) / Math.sqrt(varI) : 0;
     return {I: Math.round(I*1000)/1000, z: Math.round(z*100)/100, p: 2*(1-Stats.normalCDF(Math.abs(z)))};
   },
+  cochranArmitage(languages, featureValue) {
+    const matchSet = featureValue instanceof Set ? featureValue : new Set([featureValue]);
+
+    // Count per tier
+    const tierCounts = {};
+    for (let t = 1; t <= 5; t++) tierCounts[t] = {total: 0, feature: 0};
+
+    languages.forEach(lang => {
+      let tierNum = 0;
+      for (const [tierKey, tierData] of Object.entries(TIER_STRUCTURE)) {
+        const tierRegions = State.regions.filter(r => tierData.regions.includes(r.id));
+        for (const r of tierRegions) {
+          if (r.test(lang.lat, lang.lon)) {
+            tierNum = parseInt(tierKey.replace('tier', ''));
+            break;
+          }
+        }
+        if (tierNum > 0) break;
+      }
+      if (tierNum >= 1 && tierNum <= 5) {
+        tierCounts[tierNum].total++;
+        if (matchSet.has(lang.value)) tierCounts[tierNum].feature++;
+      }
+    });
+
+    const scores = [1, 2, 3, 4, 5];
+    const n = [], x = [];
+    for (let t = 1; t <= 5; t++) { n.push(tierCounts[t].total); x.push(tierCounts[t].feature); }
+
+    const N = n.reduce((a, b) => a + b, 0);
+    const X = x.reduce((a, b) => a + b, 0);
+    if (N === 0 || X === 0 || X === N) return {z: 0, p: 1, direction: '—', tierPcts: n.map((ni, i) => ni > 0 ? x[i] / ni : 0)};
+
+    const pBar = X / N;
+
+    let T = 0;
+    for (let i = 0; i < 5; i++) T += scores[i] * (x[i] - n[i] * pBar);
+
+    let sumNT2 = 0, sumNT = 0;
+    for (let i = 0; i < 5; i++) { sumNT2 += n[i] * scores[i] * scores[i]; sumNT += n[i] * scores[i]; }
+    const varT = pBar * (1 - pBar) * (sumNT2 - (sumNT * sumNT) / N);
+
+    if (varT <= 0) return {z: 0, p: 1, direction: '—', tierPcts: n.map((ni, i) => ni > 0 ? x[i] / ni : 0)};
+
+    const z = T / Math.sqrt(varT);
+    const p = 2 * (1 - Stats.normalCDF(Math.abs(z)));
+    const direction = z < 0 ? '↓' : '↑';
+
+    return {z: Math.round(z * 100) / 100, p, direction, tierPcts: n.map((ni, i) => ni > 0 ? x[i] / ni : 0)};
+  },
   computePhyloControl(languages, featureValue, classification='wals') {
     const families = {};
     let excludedCount = 0;
@@ -704,8 +764,20 @@ const Stats = {
       } else {
         f = l.family || 'Isolate/Unknown';
       }
-      if (!families[f]) families[f] = {total:0, inRef:0, hasFeature:false};
+      if (!families[f]) families[f] = {total:0, inRef:0, hasFeature:false, langs:[]};
       families[f].total++;
+      // Determine tier
+      let tierNum = 0, tierName = 'Non-refugia';
+      for (const [tk, td] of Object.entries(TIER_STRUCTURE)) {
+        const tRegs = State.regions.filter(r => td.regions.includes(r.id));
+        for (const r of tRegs) {
+          if (r.test(l.lat, l.lon)) { tierNum = parseInt(tk.replace('tier','')); tierName = td.name; break; }
+        }
+        if (tierNum > 0) break;
+      }
+      let regionName = 'Unknown';
+      for (const r of State.regions) { if (r.test(l.lat, l.lon)) { regionName = r.name; break; } }
+      families[f].langs.push({id: l.id, name: l.name, value: l.value, valueLabel: l.valueLabel, tierNum, tierName, regionName, inRef: Stats.isInAnyRefugia(l), hasFeature: l.value === featureValue});
       if (Stats.isInAnyRefugia(l)) families[f].inRef++;
       if (l.value === featureValue) families[f].hasFeature = true;
     });
@@ -725,7 +797,7 @@ const Stats = {
       const mean = n * p, std = Math.sqrt(n * p * (1-p)), z = std > 0 ? (fc - 0.5 - mean) / std : 0;
       return {name:th.name, baselinePct:bp, featurePct:fp, featureCount:fc, featureTotal:n, enrichment:enr, pValue: 1 - Stats.normalCDF(z)};
     });
-    results._excludedCount = excludedCount;
+    results._familyDetails = allF.map(([name, f]) => ({name, total: f.total, inRef: f.inRef, pct: f.total > 0 ? f.inRef / f.total : 0, hasFeature: f.hasFeature, langs: f.langs || []}));    results._excludedCount = excludedCount;
     results._totalFamilies = totalF;
     results._classification = classification;
     return results;
@@ -733,31 +805,93 @@ const Stats = {
   chiSquare(a,b,c,d) {
     const n = a+b+c+d;
     if (!n || !(a+b) || !(c+d) || !(a+c) || !(b+d)) return {chi2:0, p:1};
-    const chi2 = n * ((a*d - b*c)**2) / ((a+b)*(c+d)*(a+c)*(b+d));
-    return {chi2: Math.round(chi2*100)/100, p: 2*(1-Stats.normalCDF(Math.sqrt(chi2)))};
+    const exp_a = (a+b)*(a+c)/n, exp_b = (a+b)*(b+d)/n;
+    const exp_c = (c+d)*(a+c)/n, exp_d = (c+d)*(b+d)/n;
+    const chi2 = ((a-exp_a)**2)/exp_a + ((b-exp_b)**2)/exp_b + ((c-exp_c)**2)/exp_c + ((d-exp_d)**2)/exp_d;
+    const chi2r = Math.round(chi2*100)/100;
+    const p = 1 - Stats.normalCDF(Math.sqrt(chi2));
+    return {chi2:chi2r, p: 2*p};
   },
   computeCooccurrence(chapters) {
     const ids = Object.keys(chapters);
-    if (ids.length < 2) return [];
+    if (ids.length < 2) return {results: [], baseline: 0, commonN: 0, commonInRef: 0};
     const ls = {};
     ids.forEach(cid => { ls[cid] = {}; chapters[cid].languages.forEach(l => { ls[cid][l.id] = l; }); });
-    let common = new Set(Object.keys(ls[ids[0]]));
-    for (let i = 1; i < ids.length; i++) common = new Set([...common].filter(x => ls[ids[i]][x]));
+
+    // Global common set (for baseline when all chapters loaded)
+    let globalCommon = new Set(Object.keys(ls[ids[0]]));
+    for (let i = 1; i < ids.length; i++) globalCommon = new Set([...globalCommon].filter(x => ls[ids[i]][x]));
+    const globalCommonLangs = [...globalCommon].map(lid => ls[ids[0]][lid]).filter(Boolean);
+    const commonInRef = globalCommonLangs.filter(l => Stats.isInAnyRefugia(l)).length;
+    const baseline = globalCommonLangs.length > 0 ? commonInRef / globalCommonLangs.length : 0;
+
     const results = [];
     for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) {
       const c1 = ids[i], c2 = ids[j];
+      // Pairwise common set: only languages in BOTH of these two chapters
+      const pairCommon = new Set(Object.keys(ls[c1]).filter(lid => ls[c2][lid]));
       for (const v1 of Object.keys(chapters[c1].codes)) for (const v2 of Object.keys(chapters[c2].codes)) {
         let a=0,b=0,c=0,d=0;
-        for (const lid of common) { const l1=ls[c1][lid],l2=ls[c2][lid]; if(!l1||!l2)continue; const h1=l1.value===v1,h2=l2.value===v2; if(h1&&h2)a++;else if(h1)b++;else if(h2)c++;else d++; }
+        for (const lid of pairCommon) { const l1=ls[c1][lid],l2=ls[c2][lid]; if(!l1||!l2)continue; const h1=l1.value===v1,h2=l2.value===v2; if(h1&&h2)a++;else if(h1)b++;else if(h2)c++;else d++; }
         if (!a) continue;
         const total=a+b+c+d, exp=(a+b)*(a+c)/total;
         const {chi2,p} = Stats.chiSquare(a,b,c,d);
-        const combo = [...common].filter(lid => { const l1=ls[c1][lid],l2=ls[c2][lid]; return l1&&l2&&l1.value===v1&&l2.value===v2; }).map(lid => ls[c1][lid]);
+        const combo = [...pairCommon].filter(lid => { const l1=ls[c1][lid],l2=ls[c2][lid]; return l1&&l2&&l1.value===v1&&l2.value===v2; }).map(lid => ls[c1][lid]);
         const comboInRef = combo.filter(l => Stats.isInAnyRefugia(l)).length;
         results.push({chapter1:c1,chapter2:c2,value1:v1,value2:v2,label1:chapters[c1].codes[v1]||v1,label2:chapters[c2].codes[v2]||v2,observed:a,expected:Math.round(exp*10)/10,chi2,p,comboN:combo.length,comboInRef,comboPct:combo.length>0?comboInRef/combo.length:0,commonTotal:total});
       }
     }
-    return results.sort((a,b) => a.p - b.p);
+    return {results: results.sort((a,b) => a.p - b.p), baseline, commonN: globalCommonLangs.length, commonInRef};
+  },
+  crossChapterFamilyCounts() {
+    const gFamilies = new Set();
+    const wFamilies = new Set();
+    const perChapter = {};
+    for (const [cid, ch] of Object.entries(State.loadedChapters)) {
+      const gSet = new Set(), wSet = new Set();
+      ch.languages.forEach(l => {
+        const gf = GLOTTOLOG_LOOKUP[l.id];
+        if (gf) { gFamilies.add(gf); gSet.add(gf); }
+        if (l.family && l.family !== 'Unknown') { wFamilies.add(l.family); wSet.add(l.family); }
+      });
+      perChapter[cid] = {glottolog: gSet.size, wals: wSet.size};
+    }
+    return {glottologTotal: gFamilies.size, walsTotal: wFamilies.size, perChapter};
+  },
+  fisherCombined(pValues) {
+    const valid = pValues.filter(p => p > 0 && p <= 1);
+    if (valid.length === 0) return {chi2: 0, df: 0, p: 1};
+    const chi2 = -2 * valid.reduce((sum, p) => sum + Math.log(p), 0);
+    const df = 2 * valid.length;
+    // Chi-square survival function using incomplete gamma
+    const p = 1 - Stats.chiSquareCDF(chi2, df);
+    return {chi2: Math.round(chi2 * 100) / 100, df, p};
+  },
+  chiSquareCDF(x, df) {
+    if (x <= 0) return 0;
+    const a = df / 2;
+    const halfX = x / 2;
+    let sum = 0, term = 1 / a;
+    sum = term;
+    for (let n = 1; n < 200; n++) {
+      term *= halfX / (a + n);
+      sum += term;
+      if (Math.abs(term) < 1e-12) break;
+    }
+    return sum * Math.exp(-halfX + a * Math.log(halfX) - Stats.lnGamma(a));
+  },
+  lnGamma(z) {
+    // Lanczos approximation
+    const g = 7;
+    const c = [0.99999999999980993, 676.5203681218851, -1259.1392167224028,
+      771.32342877765313, -176.61502916214059, 12.507343278686905,
+      -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+    if (z < 0.5) return Math.log(Math.PI / Math.sin(Math.PI * z)) - Stats.lnGamma(1 - z);
+    z -= 1;
+    let x = c[0];
+    for (let i = 1; i < g + 2; i++) x += c[i] / (z + i);
+    const t = z + g + 0.5;
+    return 0.5 * Math.log(2 * Math.PI) + (z + 0.5) * Math.log(t) - t + Math.log(x);
   }
 };
 
@@ -1121,7 +1255,7 @@ const MapManager = {
         <strong>${lang.name}</strong>
         ${familyLine}
         <div class="tt-value">${lang.valueLabel}</div>
-        <div class="tt-value">${inRef ? '● In refugia' : '○ Non-refugia'}</div>
+        <div class="tt-value">${inRef ? '● In selection' : '○ Not in selection'}</div>
       </div>`, {direction:'top', offset:[0,-6]});
       State.markers.addLayer(marker);
     });
@@ -1497,29 +1631,41 @@ const UI = {
     const el = document.getElementById('enrichmentResults');
     if (!result || !chapter) { el.innerHTML = '<div class="empty-state"><p>Upload and select a chapter.</p></div>'; return; }
     const bp = (result.baseline * 100).toFixed(1);
-    const showBreakdown = document.getElementById('cbBreakdown')?.checked ?? false; // Default to checked
+    const showBreakdown = document.getElementById('cbBreakdown')?.checked ?? false;
 
-    // Build header
+    // Helper: compute binary chi-square for a feature value vs rest
+    const binaryChi = (featInRef, featTotal) => {
+      const a = featInRef;
+      const b = featTotal - featInRef;
+      const c = result.totalInRefugia - featInRef;
+      const d = (result.total - featTotal) - c;
+      if (a + b === 0 || c + d === 0 || a + c === 0 || b + d === 0) return {chi2: '—', p: 1};
+      return Stats.chiSquare(a, b, c, d);
+    };
+
     let html = `<div class="enrichment-controls">
       <label style="font-size:11px;display:flex;align-items:center;gap:4px;cursor:pointer">
         <input type="checkbox" id="cbBreakdown" ${showBreakdown?'checked':''} onchange="App.updateAnalysis()" style="accent-color:var(--accent)"> Region breakdown
       </label>
     </div>`;
     
-    // Main enrichment table
     html += `<table class="stats-table">
-      <tr><th>Feature Value</th><th class="num">N</th><th class="num">Ref</th><th class="num">%</th><th class="num">E×</th><th class="num" style="width:20px"></th></tr>`;
+      <tr><th>Feature Value</th><th class="num">N</th><th class="num">Ref</th><th class="num">%</th><th class="num">E×</th><th class="num">χ²</th><th class="num">p</th><th class="num" style="width:20px"></th></tr>`;
 
     // Baseline row
-    html += `<tr class="baseline"><td><em>Baseline</em></td><td class="num">${result.total}</td><td class="num">${result.totalInRefugia}</td><td class="num">${bp}%</td><td class="num">1.00×</td><td></td></tr>`;
+    html += `<tr class="baseline"><td><em>Baseline</em></td><td class="num">${result.total}</td><td class="num">${result.totalInRefugia}</td><td class="num">${bp}%</td><td class="num">1.00×</td><td class="num">—</td><td class="num">—</td><td></td></tr>`;
 
-    // Feature value rows with checkboxes for composite
+    // Feature value rows
     const keys = chapter.codeOrder.length ? chapter.codeOrder : Object.keys(result.byValue);
     keys.forEach(code => {
       const v = result.byValue[code]; if (!v) return;
       const pct = (v.pct * 100).toFixed(1), enr = v.enrichment.toFixed(2);
       const cls = v.enrichment > 1.1 ? 'enriched' : (v.enrichment < 0.9 ? 'depleted' : 'neutral-val');
-      html += `<tr><td><label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" class="composite-cb" data-code="${code}" style="accent-color:var(--accent);width:12px;height:12px">${v.label}</label></td><td class="num">${v.total}</td><td class="num">${v.inRefugia}</td><td class="num">${pct}%</td><td class="num ${cls}">${enr}×</td><td></td></tr>`;
+      const chi = binaryChi(v.inRefugia, v.total);
+      const chi2Str = typeof chi.chi2 === 'number' ? chi.chi2.toFixed(2) : '—';
+      const pStr = typeof chi.p === 'number' && chi.p < 1 ? (chi.p < 0.001 ? '<.001' : chi.p.toFixed(3)) : '—';
+      const sigCls = typeof chi.p === 'number' && chi.p < 0.05 ? 'enriched' : 'neutral-val';
+      html += `<tr><td><label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" class="composite-cb" data-code="${code}" style="accent-color:var(--accent);width:12px;height:12px">${v.label}</label></td><td class="num">${v.total}</td><td class="num">${v.inRefugia}</td><td class="num">${pct}%</td><td class="num ${cls}">${enr}×</td><td class="num">${chi2Str}</td><td class="num ${sigCls}">${pStr}</td><td></td></tr>`;
     });
 
     // Composite rows
@@ -1527,7 +1673,11 @@ const UI = {
       const comp = Stats.computeCompositeRow(chapter.languages, cr.codes, result.baseline);
       const pct = (comp.pct * 100).toFixed(1), enr = comp.enrichment.toFixed(2);
       const cls = comp.enrichment > 1.1 ? 'enriched' : (comp.enrichment < 0.9 ? 'depleted' : 'neutral-val');
-      html += `<tr class="composite-row"><td title="${[...cr.codes].map(c => chapter.codes[c]||c).join(' + ')}"><em>${cr.name}</em></td><td class="num">${comp.total}</td><td class="num">${comp.inRefugia}</td><td class="num">${pct}%</td><td class="num ${cls}">${enr}×</td><td><button class="btn-x" onclick="State.compositeRows.splice(${idx},1);App.updateAnalysis()" title="Remove">×</button></td></tr>`;
+      const chi = binaryChi(comp.inRefugia, comp.total);
+      const chi2Str = typeof chi.chi2 === 'number' ? chi.chi2.toFixed(2) : '—';
+      const pStr = typeof chi.p === 'number' && chi.p < 1 ? (chi.p < 0.001 ? '<.001' : chi.p.toFixed(3)) : '—';
+      const sigCls = typeof chi.p === 'number' && chi.p < 0.05 ? 'enriched' : 'neutral-val';
+      html += `<tr class="composite-row"><td title="${[...cr.codes].map(c => chapter.codes[c]||c).join(' + ')}"><em>${cr.name}</em></td><td class="num">${comp.total}</td><td class="num">${comp.inRefugia}</td><td class="num">${pct}%</td><td class="num ${cls}">${enr}×</td><td class="num">${chi2Str}</td><td class="num ${sigCls}">${pStr}</td><td><button class="btn-x" onclick="State.compositeRows.splice(${idx},1);App.updateAnalysis()" title="Remove">×</button></td></tr>`;
     });
 
     html += '</table>';
@@ -1699,16 +1849,55 @@ const UI = {
     el.innerHTML = html;
   },
 
+  renderTrend(results, chapter) {
+    const el = document.getElementById('trendResults');
+    let html = `<table class="stats-table"><tr><th>Feature Value</th><th class="num">Trend</th><th class="num">z</th><th class="num">p</th><th class="num" style="font-size:9px">T1→T5</th></tr>`;
+    const keys = chapter.codeOrder.length ? chapter.codeOrder : Object.keys(results);
+    keys.forEach(code => {
+      if (code.startsWith('__composite__')) return;
+      const r = results[code]; if (!r) return;
+      const pStr = isNaN(r.p) ? '—' : (r.p < 0.001 ? '<.001' : r.p.toFixed(4));
+      const sig = !isNaN(r.p) && r.p < 0.05 ? 'enriched' : 'neutral-val';
+      const spark = r.tierPcts ? r.tierPcts.map(v => (v * 100).toFixed(0) + '%').join('→') : '';
+      html += `<tr><td>${chapter.codes[code]||code}</td><td class="num">${r.direction}</td><td class="num">${isNaN(r.z)?'—':r.z.toFixed(2)}</td><td class="num ${sig}">${pStr}</td><td class="num" style="font-size:9px;color:var(--text-muted)">${spark}</td></tr>`;
+    });
+    State.compositeRows.forEach((cr, idx) => {
+      const r = results['__composite__' + idx]; if (!r) return;
+      const pStr = isNaN(r.p) ? '—' : (r.p < 0.001 ? '<.001' : r.p.toFixed(4));
+      const sig = !isNaN(r.p) && r.p < 0.05 ? 'enriched' : 'neutral-val';
+      const spark = r.tierPcts ? r.tierPcts.map(v => (v * 100).toFixed(0) + '%').join('→') : '';
+      html += `<tr class="composite-row"><td><em>${cr.name}</em></td><td class="num">${r.direction}</td><td class="num">${isNaN(r.z)?'—':r.z.toFixed(2)}</td><td class="num ${sig}">${pStr}</td><td class="num" style="font-size:9px;color:var(--text-muted)">${spark}</td></tr>`;
+    });
+    html += '</table>';
+    if (State.compositeRows.length === 0) {
+      html += `<div style="margin-top:6px;font-size:11px;color:var(--text-muted)">Tip: combine values in Enrichment Analysis to test composite categories.</div>`;
+    }
+    html += `<div style="margin-top:6px"><button class="btn-sm" onclick="App.copyTrendTable()">📋 Copy Table</button></div>`;
+    el.innerHTML = html;
+  },
+
   renderPhylo(results, featureValue, chapter) {
     const el = document.getElementById('phyloResults');
-    const classification = results._classification || 'wals';
-    const excluded = results._excludedCount || 0;
-    const totalF = results._totalFamilies || (results[0]?.featureTotal || 0);
-    const classLabel = classification === 'glottolog' ? 'Glottolog' : 'WALS';
-    const exclNote = (classification === 'glottolog' && excluded > 0)
-      ? ` · ${excluded} language${excluded===1?'':'s'} excluded (no Glottolog mapping)`
-      : '';
-    let html = `<div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Feature: <strong>${chapter.codes[featureValue]||featureValue}</strong> · ${results[0]?.featureTotal||0} families with feature · ${totalF} total ${classLabel} families${exclNote}</div>`;
+
+    // Cross-chapter family summary
+    const fc = Stats.crossChapterFamilyCounts();
+    const loadedIds = Object.keys(State.loadedChapters);
+    let html = `<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;padding:4px 6px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:4px;">`;
+    html += `<div style="margin-bottom:2px"><strong>Loaded chapters:</strong> ${loadedIds.join(', ')}</div>`;
+    html += `<div style="display:flex;gap:12px;flex-wrap:wrap;">`;
+    html += `<span>Glottolog: <strong>${fc.glottologTotal}</strong> unique families</span>`;
+    html += `<span>WALS: <strong>${fc.walsTotal}</strong> unique families</span>`;
+    html += `</div>`;
+    if (loadedIds.length > 1) {
+      html += `<div style="font-size:10px;margin-top:2px">Per chapter: ${loadedIds.map(cid => {
+        const pc = fc.perChapter[cid];
+        return pc ? `${cid} (G:${pc.glottolog}, W:${pc.wals})` : cid;
+      }).join(' · ')}</div>`;
+    }
+    html += `</div>`;
+
+    // Current analysis
+    html += `<div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Feature: <strong>${chapter.codes[featureValue]||featureValue}</strong> · ${results[0]?.featureTotal||0} families with feature · ${results._totalFamilies||'?'} total ${results._classification||''} families</div>`;
     html += `<table class="stats-table"><tr><th>Threshold</th><th class="num">Base</th><th class="num">Feature</th><th class="num">E×</th><th class="num">p</th></tr>`;
     results.forEach(r => {
       const pStr = r.pValue < 0.0001 ? '<.0001' : r.pValue.toFixed(4);
@@ -1716,18 +1905,90 @@ const UI = {
       html += `<tr><td>${r.name}</td><td class="num">${(r.baselinePct*100).toFixed(1)}%</td><td class="num">${(r.featurePct*100).toFixed(1)}% (${r.featureCount}/${r.featureTotal})</td><td class="num ${cls}">${r.enrichment.toFixed(2)}×</td><td class="num ${cls}">${pStr}</td></tr>`;
     });
     html += '</table>';
-    html += `<div style="margin-top:8px;font-size:11px;color:var(--text-muted)">Classification: <select id="phyloClassification" onchange="App.computePhylo()" style="font-size:11px;font-family:var(--font-mono)"><option value="wals" ${classification==='wals'?'selected':''}>WALS</option><option value="glottolog" ${classification==='glottolog'?'selected':''}>Glottolog</option></select> · Analyze: <select id="phyloValueSelect" onchange="App.computePhylo()" style="font-size:11px;font-family:var(--font-mono)">`;
+    html += `<div style="margin-top:8px;font-size:11px;color:var(--text-muted)">Analyze: <select id="phyloValueSelect" onchange="App.computePhylo()" style="font-size:11px;font-family:var(--font-mono)">`;
     (chapter.codeOrder.length ? chapter.codeOrder : Object.keys(chapter.codes)).forEach(code => {
       html += `<option value="${code}" ${code===featureValue?'selected':''}>${chapter.codes[code]||code}</option>`;
     });
-    el.innerHTML = html + '</select> <button class="btn-sm" onclick="App.copyPhyloTable()" style="margin-left:8px">📋 Copy Table</button></div>';
+    html += '</select>';
+    // Classification toggle
+    html += ` <select id="phyloClassSelect" onchange="App.computePhylo()" style="font-size:11px;font-family:var(--font-mono)">`;
+    html += `<option value="glottolog" ${(results._classification||'glottolog')==='glottolog'?'selected':''}>Glottolog</option>`;
+    html += `<option value="wals" ${(results._classification||'')==='wals'?'selected':''}>WALS</option>`;
+    html += `</select></div>`;
+    // Fisher's Combined Test across loaded chapters
+    const storedChapters = Object.keys(State.phyloResults);
+    if (storedChapters.length >= 2) {
+      html += `<div style="margin-top:12px;border-top:1px solid var(--card-border);padding-top:8px;">`;
+      html += `<div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:4px">FISHER'S COMBINED TEST (${storedChapters.length} chapters)</div>`;
+      html += `<div style="font-size:10px;color:var(--text-muted);margin-bottom:6px">Combining: ${storedChapters.map(cid => {
+        const sr = State.phyloResults[cid];
+        return cid + ' (' + sr.featureLabel + ', ' + sr.classification + ')';
+      }).join(' · ')}</div>`;
+      
+      const thresholdNames = ['Any (≥1)', 'Majority (>50%)', 'Strong (≥75%)', 'Endemic (100%)'];
+      html += `<table class="stats-table" style="font-size:10px"><tr><th>Threshold</th><th class="num">χ²</th><th class="num">df</th><th class="num">p</th><th class="num" style="font-size:9px">Component p-values</th></tr>`;
+      
+      for (let t = 0; t < 4; t++) {
+        const pVals = storedChapters.map(cid => State.phyloResults[cid].results[t].pValue);
+        const fisher = Stats.fisherCombined(pVals);
+        const pStr = fisher.p < 0.000001 ? '<.000001' : (fisher.p < 0.0001 ? '<.0001' : fisher.p.toFixed(4));
+        const sig = fisher.p < 0.05 ? 'enriched' : 'neutral-val';
+        const componentStr = pVals.map(p => p < 0.0001 ? '<.0001' : p.toFixed(4)).join(', ');
+        html += `<tr><td>${thresholdNames[t]}</td><td class="num">${fisher.chi2.toFixed(2)}</td><td class="num">${fisher.df}</td><td class="num ${sig}">${pStr}</td><td class="num" style="font-size:9px;color:var(--text-muted)">${componentStr}</td></tr>`;
+      }
+      html += `</table>`;
+      html += `<div style="font-size:9px;color:var(--text-muted);margin-top:4px">To reproduce: load each chapter, select the feature value and classification, and compute phylogenetic control. Results are stored per chapter and combined automatically. Re-running a chapter overwrites its stored result.</div>`;
+      html += `</div>`;
+    }
+    // Per-family detail view
+    if (results._familyDetails) {
+      const featFamilies = results._familyDetails.filter(f => f.hasFeature).sort((a,b) => b.pct - a.pct);
+      const nonFeatFamilies = results._familyDetails.filter(f => !f.hasFeature).sort((a,b) => b.pct - a.pct);
+      
+      html += `<div style="margin-top:12px;border-top:1px solid var(--card-border);padding-top:8px;">`;
+      html += `<div class="rg-header" style="cursor:pointer" onclick="(function(el){el.nextElementSibling.classList.toggle('rg-collapsed');el.querySelector('.rg-arrow').textContent=el.nextElementSibling.classList.contains('rg-collapsed')?'▶':'▼'})(this)">`;
+      html += `<span class="rg-arrow">▶</span> <span style="font-size:11px;font-weight:600">Family Details: ${featFamilies.length} families with feature, ${nonFeatFamilies.length} without</span></div>`;
+      html += `<div class="rg-body rg-collapsed">`;
+      
+      const renderFamilyTable = (families, label) => {
+        html += `<div style="font-size:10px;font-weight:600;color:var(--text-muted);margin:6px 0 2px">${label} (${families.length})</div>`;
+        html += `<table class="stats-table" style="font-size:10px"><tr><th>Family</th><th class="num">Total</th><th class="num">In Refugia</th><th class="num">%</th></tr>`;
+        families.forEach((f, fi) => {
+          const pctStr = (f.pct * 100).toFixed(0);
+          const cls = f.pct >= 1.0 ? 'enriched' : (f.pct < 0.5 ? 'depleted' : 'neutral-val');
+          const famId = label.includes('WITH') ? 'feat_' + fi : 'nofeat_' + fi;
+          html += `<tr style="cursor:pointer" onclick="(function(el){var sub=document.getElementById('${famId}');if(sub){sub.style.display=sub.style.display==='none'?'':'none'}})(this)"><td>▸ ${f.name}</td><td class="num">${f.total}</td><td class="num">${f.inRef}</td><td class="num ${cls}">${pctStr}%</td></tr>`;
+          // Per-language sub-rows
+          html += `<tr id="${famId}" style="display:none"><td colspan="4" style="padding:2px 4px 6px 16px">`;
+          html += `<table class="stats-table" style="font-size:9px;margin:0"><tr><th>Language</th><th>Tier</th><th>Region</th><th>Has Feature</th></tr>`;
+          f.langs.sort((a,b) => a.tierNum - b.tierNum).forEach(l => {
+            const featMark = l.hasFeature ? '✓' : '';
+            const tierCls = l.tierNum <= 3 ? 'enriched' : (l.tierNum >= 4 ? 'depleted' : '');
+            html += `<tr><td>${l.name}</td><td class="${tierCls}">${l.tierName}</td><td>${l.regionName}</td><td class="num">${featMark}</td></tr>`;
+          });
+          html += `</table></td></tr>`;
+        });
+        html += `</table>`;
+      };
+      
+      renderFamilyTable(featFamilies, 'FAMILIES WITH FEATURE');
+      renderFamilyTable(nonFeatFamilies, 'FAMILIES WITHOUT FEATURE');
+      
+      html += `<div style="margin-top:6px"><button class="btn-sm" onclick="App.copyPhyloFamilies()">📋 Copy Family Details</button></div>`;
+      html += `</div></div>`;
+    }
+    el.innerHTML = html;
   },
 
-  renderCooc(results) {
+  renderCooc(results, baseline, commonN, commonInRef) {
     const el = document.getElementById('coocResults');
     if (!results || !results.length) { el.innerHTML = '<div class="empty-state"><p>Select ≥2 chapters.</p></div>'; return; }
     const top = results.filter(r => r.comboN >= 2).slice(0, 30);
-    let html = `<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">${results.length} combos · top 30</div>`;
+    let html = '';
+    if (commonN > 0) {
+      html += `<div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;padding:4px 6px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:4px;">Intersection baseline: <strong>${(baseline*100).toFixed(1)}%</strong> in refugia (${commonInRef}/${commonN} languages in common)</div>`;
+    }
+    html += `<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">${results.length} combos · top 30</div>`;
     html += `<table class="stats-table"><tr><th>Combination</th><th class="num">N</th><th class="num">%Ref</th><th class="num">χ²</th><th class="num">p</th></tr>`;
     top.forEach(r => {
       const pStr = r.p < 0.001 ? '<.001' : r.p.toFixed(3);
@@ -1830,6 +2091,7 @@ const App = {
     UI.renderRegionToggles();
     UI.updateCoocChips();
     document.getElementById('btnMoran').disabled = false;
+    document.getElementById('btnTrend').disabled = false;
     document.getElementById('btnPhylo').disabled = false;
     document.getElementById('btnSnapshot').disabled = false;
     App.updateAnalysis();
@@ -1858,25 +2120,37 @@ const App = {
     const result = Stats.computeEnrichment(ch.languages);
     const allRegions = result.enabledRegions || [];
     const showBrk = document.getElementById('cbBreakdown')?.checked;
-    let tsv = 'Feature Value\tN\tIn Refugia\t% Refugia\tEnrichment';
+    const binaryChi = (featInRef, featTotal) => {
+      const a = featInRef, b = featTotal - featInRef;
+      const c = result.totalInRefugia - featInRef, d = (result.total - featTotal) - c;
+      if (a + b === 0 || c + d === 0 || a + c === 0 || b + d === 0) return {chi2: '—', p: 1};
+      return Stats.chiSquare(a, b, c, d);
+    };
+    let tsv = 'Feature Value\tN\tIn Refugia\t% Refugia\tEnrichment\tχ²\tp';
     if (showBrk) allRegions.forEach(r => { tsv += '\t' + r.name; });
     tsv += '\n';
     // Baseline
-    tsv += `BASELINE\t${result.total}\t${result.totalInRefugia}\t${(result.baseline*100).toFixed(1)}%\t1.00×`;
+    tsv += `BASELINE\t${result.total}\t${result.totalInRefugia}\t${(result.baseline*100).toFixed(1)}%\t1.00×\t—\t—`;
     if (showBrk && result.baselineByRegion) allRegions.forEach(r => { tsv += '\t' + (result.baselineByRegion[r.id]?.count||0); });
     tsv += '\n';
     // Values
     const keys = ch.codeOrder.length ? ch.codeOrder : Object.keys(result.byValue);
     keys.forEach(code => {
       const v = result.byValue[code]; if (!v) return;
-      tsv += `${v.label}\t${v.total}\t${v.inRefugia}\t${(v.pct*100).toFixed(1)}%\t${v.enrichment.toFixed(2)}×`;
+      const chi = binaryChi(v.inRefugia, v.total);
+      const chi2Str = typeof chi.chi2 === 'number' ? chi.chi2.toFixed(2) : '—';
+      const pStr = typeof chi.p === 'number' && chi.p < 1 ? (chi.p < 0.001 ? '<.001' : chi.p.toFixed(3)) : '—';
+      tsv += `${v.label}\t${v.total}\t${v.inRefugia}\t${(v.pct*100).toFixed(1)}%\t${v.enrichment.toFixed(2)}×\t${chi2Str}\t${pStr}`;
       if (showBrk) allRegions.forEach(r => { tsv += '\t' + (v.byRegion[r.id]?.count||0); });
       tsv += '\n';
     });
     // Composites
     State.compositeRows.forEach(cr => {
       const comp = Stats.computeCompositeRow(ch.languages, cr.codes, result.baseline);
-      tsv += `[${cr.name}]\t${comp.total}\t${comp.inRefugia}\t${(comp.pct*100).toFixed(1)}%\t${comp.enrichment.toFixed(2)}×`;
+      const chi = binaryChi(comp.inRefugia, comp.total);
+      const chi2Str = typeof chi.chi2 === 'number' ? chi.chi2.toFixed(2) : '—';
+      const pStr = typeof chi.p === 'number' && chi.p < 1 ? (chi.p < 0.001 ? '<.001' : chi.p.toFixed(3)) : '—';
+      tsv += `[${cr.name}]\t${comp.total}\t${comp.inRefugia}\t${(comp.pct*100).toFixed(1)}%\t${comp.enrichment.toFixed(2)}×\t${chi2Str}\t${pStr}`;
       if (showBrk) allRegions.forEach(r => { tsv += '\t' + (comp.byRegion[r.id]?.count||0); });
       tsv += '\n';
     });
@@ -1887,19 +2161,31 @@ const App = {
     const ch = State.loadedChapters[State.currentChapter]; if (!ch) return;
     const result = Stats.computeEnrichment(ch.languages);
     const enabled = [...State.regions, ...State.customRegions].filter(r => r.enabled).map(r => r.name);
+    const binaryChi = (featInRef, featTotal) => {
+      const a = featInRef, b = featTotal - featInRef;
+      const c = result.totalInRefugia - featInRef, d = (result.total - featTotal) - c;
+      if (a + b === 0 || c + d === 0 || a + c === 0 || b + d === 0) return {chi2: '—', p: 1};
+      return Stats.chiSquare(a, b, c, d);
+    };
     let t = `═══ WALS REFUGIA ANALYSIS EXPORT ═══\n`;
     t += `Chapter: ${ch.name} (${ch.id})\nLanguages: ${ch.languages.length}\n`;
     t += `Regions: ${enabled.join(', ')}\nBaseline: ${(result.baseline*100).toFixed(1)}% (${result.totalInRefugia}/${result.total})\n\n`;
     // Enrichment table
-    t += `── ENRICHMENT ──\nFeature Value\tN\tIn Refugia\t% Refugia\tEnrichment\n`;
+    t += `── ENRICHMENT ──\nFeature Value\tN\tIn Refugia\t% Refugia\tEnrichment\tχ²\tp\n`;
     const keys = ch.codeOrder.length ? ch.codeOrder : Object.keys(result.byValue);
     keys.forEach(code => {
       const v = result.byValue[code]; if (!v) return;
-      t += `${v.label}\t${v.total}\t${v.inRefugia}\t${(v.pct*100).toFixed(1)}%\t${v.enrichment.toFixed(2)}×\n`;
+      const chi = binaryChi(v.inRefugia, v.total);
+      const chi2Str = typeof chi.chi2 === 'number' ? chi.chi2.toFixed(2) : '—';
+      const pStr = typeof chi.p === 'number' && chi.p < 1 ? (chi.p < 0.001 ? '<.001' : chi.p.toFixed(3)) : '—';
+      t += `${v.label}\t${v.total}\t${v.inRefugia}\t${(v.pct*100).toFixed(1)}%\t${v.enrichment.toFixed(2)}×\t${chi2Str}\t${pStr}\n`;
     });
     State.compositeRows.forEach(cr => {
       const comp = Stats.computeCompositeRow(ch.languages, cr.codes, result.baseline);
-      t += `[Composite] ${cr.name}\t${comp.total}\t${comp.inRefugia}\t${(comp.pct*100).toFixed(1)}%\t${comp.enrichment.toFixed(2)}×\n`;
+      const chi = binaryChi(comp.inRefugia, comp.total);
+      const chi2Str = typeof chi.chi2 === 'number' ? chi.chi2.toFixed(2) : '—';
+      const pStr = typeof chi.p === 'number' && chi.p < 1 ? (chi.p < 0.001 ? '<.001' : chi.p.toFixed(3)) : '—';
+      t += `[Composite] ${cr.name}\t${comp.total}\t${comp.inRefugia}\t${(comp.pct*100).toFixed(1)}%\t${comp.enrichment.toFixed(2)}×\t${chi2Str}\t${pStr}\n`;
     });
     // Region breakdown
     if (result.enabledRegions?.length) {
@@ -1915,6 +2201,14 @@ const App = {
     if (moranEl?.querySelector('table')) {
       t += `\n── MORAN'S I ──\n`;
       moranEl.querySelectorAll('tr').forEach(row => {
+        t += [...row.querySelectorAll('th,td')].map(c=>c.textContent.trim()).join('\t') + '\n';
+      });
+    }
+    // Trend test
+    const trendEl = document.getElementById('trendResults');
+    if (trendEl?.querySelector('table')) {
+      t += `\n── COCHRAN-ARMITAGE TREND TEST ──\n`;
+      trendEl.querySelectorAll('tr').forEach(row => {
         t += [...row.querySelectorAll('th,td')].map(c=>c.textContent.trim()).join('\t') + '\n';
       });
     }
@@ -1940,7 +2234,6 @@ const App = {
     }
     navigator.clipboard.writeText(t).then(() => UI.setStatus('📋 Full analysis exported to clipboard')).catch(() => UI.setStatus('⚠ Copy failed'));
   },
-
   computeMoran() {
     const ch = State.loadedChapters[State.currentChapter]; if (!ch) return;
     const btn = document.getElementById('btnMoran');
@@ -1959,16 +2252,35 @@ const App = {
     }, 50);
   },
 
+  computeTrend() {
+    const ch = State.loadedChapters[State.currentChapter]; if (!ch) return;
+    const btn = document.getElementById('btnTrend');
+    btn.classList.add('running'); btn.textContent = 'Computing...';
+    setTimeout(() => {
+      const results = {};
+      (ch.codeOrder.length ? ch.codeOrder : Object.keys(ch.codes)).forEach(code => {
+        results[code] = Stats.cochranArmitage(ch.languages, code);
+      });
+      State.compositeRows.forEach((cr, idx) => {
+        results['__composite__' + idx] = Stats.cochranArmitage(ch.languages, cr.codes);
+      });
+      UI.renderTrend(results, ch);
+      btn.classList.remove('running'); btn.textContent = 'Compute Trend Test';
+    }, 50);
+  },
+
   computePhylo() {
     const ch = State.loadedChapters[State.currentChapter]; if (!ch) return;
     const sel = document.getElementById('phyloValueSelect');
     const fv = sel ? sel.value : (ch.codeOrder[0] || Object.keys(ch.codes)[0]);
-    const classSel = document.getElementById('phyloClassification');
-    const classification = classSel ? classSel.value : 'wals';
+    const classSel = document.getElementById('phyloClassSelect');
+    const classification = classSel ? classSel.value : 'glottolog';
     const btn = document.getElementById('btnPhylo');
     btn.classList.add('running'); btn.textContent = 'Computing...';
     setTimeout(() => {
-      UI.renderPhylo(Stats.computePhyloControl(ch.languages, fv, classification), fv, ch);
+      const results = Stats.computePhyloControl(ch.languages, fv, classification);
+      State.phyloResults[ch.id] = {featureValue: fv, featureLabel: ch.codes[fv] || fv, classification, results};
+      UI.renderPhylo(results, fv, ch);
       btn.classList.remove('running'); btn.textContent = 'Compute Phylogenetic Control';
     }, 50);
   },
@@ -1980,7 +2292,8 @@ const App = {
     const btn = document.getElementById('btnCooc');
     btn.classList.add('running'); btn.textContent = 'Computing...';
     setTimeout(() => {
-      UI.renderCooc(Stats.computeCooccurrence(chapters));
+      const data = Stats.computeCooccurrence(chapters);
+      UI.renderCooc(data.results, data.baseline, data.commonN, data.commonInRef);
       btn.classList.remove('running'); btn.textContent = 'Compute Co-occurrence';
     }, 50);
   },
@@ -2031,6 +2344,10 @@ const App = {
       
       checkboxContainer.appendChild(chapterGroup);
     }
+    const tip = document.createElement('div');
+    tip.style.cssText = 'font-size:10px;color:var(--text-muted);margin-top:6px;padding-top:4px;border-top:1px solid var(--card-border)';
+    tip.textContent = 'Multiple values within a chapter = OR (composite). Values across chapters = AND.';
+    checkboxContainer.appendChild(tip);
   },
 
   updateCoocLanguageList() {
@@ -2047,58 +2364,74 @@ const App = {
     });
     
     if (selectedFeatures.length === 0) {
-      listContainer.innerHTML = '<div class="empty-state" style="padding:12px"><p>Select feature values above to see matching languages</p></div>';
+      listContainer.innerHTML = '<div class="empty-state" style="padding:12px"><p>Select feature values above to see matching languages.<br><span style="font-size:10px;color:var(--text-muted)">Multiple values within a chapter = OR (composite). Values across chapters = AND.</span></p></div>';
       countContainer.textContent = '';
       return;
     }
     
-    // Find languages that have ALL selected features
-    const chapters = Array.from(State.coocSelected).map(cid => State.loadedChapters[cid]).filter(Boolean);
-    if (chapters.length === 0) return;
-    
-    // Build language lookup by ID across chapters
-    const langsByChapter = {};
+    // Group selected features by chapter (within chapter = OR, across chapters = AND)
+    const featuresByChapter = {};
     selectedFeatures.forEach(sf => {
-      const ch = State.loadedChapters[sf.chapterId];
+      if (!featuresByChapter[sf.chapterId]) featuresByChapter[sf.chapterId] = new Set();
+      featuresByChapter[sf.chapterId].add(sf.valueCode);
+    });
+    
+    const chapterIds = Object.keys(featuresByChapter);
+    
+    // Build language lookup by ID for each chapter with selections
+    const langsByChapter = {};
+    chapterIds.forEach(cid => {
+      const ch = State.loadedChapters[cid];
       if (!ch) return;
-      langsByChapter[sf.chapterId] = {};
-      ch.languages.forEach(l => {
-        langsByChapter[sf.chapterId][l.id] = l;
-      });
+      langsByChapter[cid] = {};
+      ch.languages.forEach(l => { langsByChapter[cid][l.id] = l; });
     });
     
-    // Find common language IDs across all selected chapters
-    const firstChapter = selectedFeatures[0].chapterId;
-    let commonIds = new Set(Object.keys(langsByChapter[firstChapter] || {}));
+    // Find common language IDs across all chapters with selections
+    let commonIds = new Set(Object.keys(langsByChapter[chapterIds[0]] || {}));
+    for (let i = 1; i < chapterIds.length; i++) {
+      const chIds = new Set(Object.keys(langsByChapter[chapterIds[i]] || {}));
+      commonIds = new Set([...commonIds].filter(id => chIds.has(id)));
+    }
     
-    selectedFeatures.slice(1).forEach(sf => {
-      const chapterIds = new Set(Object.keys(langsByChapter[sf.chapterId] || {}));
-      commonIds = new Set([...commonIds].filter(id => chapterIds.has(id)));
-    });
+    // Compute intersection baseline: % of common languages in refugia
+    const allCommon = [...commonIds].map(lid => langsByChapter[chapterIds[0]][lid]).filter(Boolean);
+    const commonInRefugia = allCommon.filter(l => Stats.isInAnyRefugia(l)).length;
+    const baselinePct = allCommon.length > 0 ? commonInRefugia / allCommon.length : 0;
     
-    // Filter to languages that match ALL selected feature values
+    // Filter: within each chapter, match ANY selected value; across chapters, match ALL
     const matchingLangs = [];
     for (const lid of commonIds) {
-      let matches = true;
-      for (const sf of selectedFeatures) {
-        const lang = langsByChapter[sf.chapterId][lid];
-        if (!lang || lang.value !== sf.valueCode) {
-          matches = false;
+      let matchesAll = true;
+      for (const [cid, valueCodes] of Object.entries(featuresByChapter)) {
+        const lang = langsByChapter[cid][lid];
+        if (!lang || !valueCodes.has(lang.value)) {
+          matchesAll = false;
           break;
         }
       }
-      if (matches) {
-        // Use the language object from the first chapter
-        matchingLangs.push(langsByChapter[firstChapter][lid]);
+      if (matchesAll) {
+        matchingLangs.push(langsByChapter[chapterIds[0]][lid]);
       }
     }
+    
+    // Compute summary statistics
+    const matchInRefugia = matchingLangs.filter(l => Stats.isInAnyRefugia(l)).length;
+    const matchPct = matchingLangs.length > 0 ? matchInRefugia / matchingLangs.length : 0;
+    const enrichment = baselinePct > 0 ? matchPct / baselinePct : 0;
+    
+    // Chi-square: matching vs non-matching × refugia vs non-refugia
+    const a = matchInRefugia;
+    const b = matchingLangs.length - matchInRefugia;
+    const c = commonInRefugia - matchInRefugia;
+    const d = (allCommon.length - matchingLangs.length) - c;
+    const chiResult = (a + b > 0 && c + d > 0 && a + b < allCommon.length) ? Stats.chiSquare(a, b, c, d) : {chi2: '—', p: 1};
     
     // Group by tier
     const tierGroups = {};
     matchingLangs.forEach(lang => {
-      // Determine which tier this language belongs to
-      let tierName = 'Non-Refugia';
-      let tierNum = 5;
+      let tierName = 'Unassigned';
+      let tierNum = 99;
       
       for (const [tierKey, tierData] of Object.entries(TIER_STRUCTURE)) {
         const tierRegions = State.regions.filter(r => tierData.regions.includes(r.id));
@@ -2109,10 +2442,9 @@ const App = {
             break;
           }
         }
-        if (tierName !== 'Non-Refugia') break;
+        if (tierNum !== 99) break;
       }
       
-      // Also get specific region
       let regionName = 'Unknown';
       for (const r of State.regions) {
         if (r.test(lang.lat, lang.lon)) {
@@ -2127,22 +2459,34 @@ const App = {
       tierGroups[tierNum].langs.push({...lang, regionName});
     });
     
-    // Render
-    countContainer.textContent = `Showing ${matchingLangs.length} language${matchingLangs.length !== 1 ? 's' : ''}`;
+    // Render count
+    countContainer.textContent = `${matchingLangs.length} language${matchingLangs.length !== 1 ? 's' : ''}`;
     
     if (matchingLangs.length === 0) {
       listContainer.innerHTML = '<div class="empty-state" style="padding:12px"><p>No languages match all selected features</p></div>';
       return;
     }
     
-    let html = '<table class="stats-table"><tr><th>Tier</th><th>Language</th><th>Region</th><th>Family</th></tr>';
+    // Summary statistics box
+    const pStr = typeof chiResult.p === 'number' && chiResult.p < 1 ? (chiResult.p < 0.001 ? '<.001' : chiResult.p.toFixed(3)) : '—';
+    const chi2Str = typeof chiResult.chi2 === 'number' ? chiResult.chi2.toFixed(2) : '—';
+    const enrCls = enrichment > 1.1 ? 'enriched' : (enrichment < 0.9 ? 'depleted' : 'neutral-val');
     
-    // Sort by tier number
+    let html = `<div style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:6px;padding:8px 10px;margin-bottom:8px;font-size:11px;">`;
+    html += `<div style="display:flex;gap:12px;flex-wrap:wrap;">`;
+    html += `<span>Baseline: <strong>${(baselinePct*100).toFixed(1)}%</strong> refugia (${commonInRefugia}/${allCommon.length})</span>`;
+    html += `<span>Matching: <strong>${(matchPct*100).toFixed(1)}%</strong> refugia (${matchInRefugia}/${matchingLangs.length})</span>`;
+    html += `<span class="${enrCls}">E: <strong>${enrichment.toFixed(2)}×</strong></span>`;
+    html += `<span>χ²<sub>geo</sub>=${chi2Str} · p=${pStr}</span>`;
+    html += `</div></div>`;
+    
+    // Language table
+    html += '<table class="stats-table"><tr><th>Tier</th><th>Language</th><th>Region</th><th>Family</th></tr>';
+    
     const sortedTiers = Object.keys(tierGroups).sort((a, b) => parseInt(a) - parseInt(b));
     
     sortedTiers.forEach(tierNum => {
       const group = tierGroups[tierNum];
-      // Sort languages within tier alphabetically
       group.langs.sort((a, b) => a.name.localeCompare(b.name));
       
       group.langs.forEach((lang, idx) => {
@@ -2207,7 +2551,51 @@ const App = {
       tsv += [...row.querySelectorAll('th,td')].map(c => c.textContent.trim()).join('\t') + '\n';
     });
     navigator.clipboard.writeText(tsv).then(() => UI.setStatus('📋 Language list copied')).catch(() => UI.setStatus('⚠ Copy failed'));
-  }
+  },
+
+  copyTrendTable() {
+    const ch = State.loadedChapters[State.currentChapter]; if (!ch) return;
+    const el = document.getElementById('trendResults');
+    if (!el?.querySelector('table')) { UI.setStatus('⚠ No trend results to copy'); return; }
+    let tsv = 'Feature Value\tTrend\tz\tp\tT1\tT2\tT3\tT4\tT5\n';
+    const results = {};
+    (ch.codeOrder.length ? ch.codeOrder : Object.keys(ch.codes)).forEach(code => {
+      results[code] = Stats.cochranArmitage(ch.languages, code);
+    });
+    State.compositeRows.forEach((cr, idx) => {
+      results['__composite__' + idx] = Stats.cochranArmitage(ch.languages, cr.codes);
+    });
+    const keys = ch.codeOrder.length ? ch.codeOrder : Object.keys(ch.codes);
+    keys.forEach(code => {
+      const r = results[code]; if (!r) return;
+      const pStr = isNaN(r.p) ? '—' : (r.p < 0.001 ? '<.001' : r.p.toFixed(4));
+      const pcts = r.tierPcts ? r.tierPcts.map(v => (v * 100).toFixed(1) + '%').join('\t') : '\t\t\t\t';
+      tsv += `${ch.codes[code]||code}\t${r.direction}\t${isNaN(r.z)?'—':r.z.toFixed(2)}\t${pStr}\t${pcts}\n`;
+    });
+    State.compositeRows.forEach((cr, idx) => {
+      const r = results['__composite__' + idx]; if (!r) return;
+      const pStr = isNaN(r.p) ? '—' : (r.p < 0.001 ? '<.001' : r.p.toFixed(4));
+      const pcts = r.tierPcts ? r.tierPcts.map(v => (v * 100).toFixed(1) + '%').join('\t') : '\t\t\t\t';
+      tsv += `[${cr.name}]\t${r.direction}\t${isNaN(r.z)?'—':r.z.toFixed(2)}\t${pStr}\t${pcts}\n`;
+    });
+    navigator.clipboard.writeText(tsv).then(() => UI.setStatus('📋 Trend table copied')).catch(() => UI.setStatus('⚠ Copy failed'));
+  },
+
+  copyPhyloFamilies() {
+    const el = document.getElementById('phyloResults');
+    const tables = el.querySelectorAll('.rg-body table');
+    if (!tables.length) { UI.setStatus('⚠ No family details to copy'); return; }
+    let tsv = 'Family\tTotal\tIn Refugia\t%\tHas Feature\n';
+    tables.forEach(table => {
+      table.querySelectorAll('tr').forEach(row => {
+        const cells = [...row.querySelectorAll('td')];
+        if (cells.length >= 4) {
+          tsv += cells.map(c => c.textContent.trim()).join('\t') + '\t' + (table.previousElementSibling.textContent.includes('WITH') ? 'Yes' : 'No') + '\n';
+        }
+      });
+    });
+    navigator.clipboard.writeText(tsv).then(() => UI.setStatus('📋 Family details copied')).catch(() => UI.setStatus('⚠ Copy failed'));
+  },
 };
 
 document.addEventListener('DOMContentLoaded', () => App.init());
