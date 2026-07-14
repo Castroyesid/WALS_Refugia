@@ -704,52 +704,51 @@ const Stats = {
   },
   cochranArmitage(languages, featureValue) {
     const matchSet = featureValue instanceof Set ? featureValue : new Set([featureValue]);
-
-    // Count per tier
     const tierCounts = {};
     for (let t = 1; t <= 5; t++) tierCounts[t] = {total: 0, feature: 0};
-
     languages.forEach(lang => {
       let tierNum = 0;
-      for (const [tierKey, tierData] of Object.entries(TIER_STRUCTURE)) {
-        const tierRegions = State.regions.filter(r => tierData.regions.includes(r.id));
-        for (const r of tierRegions) {
-          if (r.test(lang.lat, lang.lon)) {
-            tierNum = parseInt(tierKey.replace('tier', ''));
-            break;
-          }
+      // Custom regions with an assigned tier take priority 
+      for (const cr of State.customRegions) {
+        if (cr.enabled && cr.tier && cr.test && cr.test(lang.lat, lang.lon)) {
+          tierNum = cr.tier;
+          break;
         }
-        if (tierNum > 0) break;
+      }
+      // Fall back to predefined tier structure
+      if (tierNum === 0) {
+        for (const [tierKey, tierData] of Object.entries(TIER_STRUCTURE)) {
+          const tierRegions = State.regions.filter(r => tierData.regions.includes(r.id));
+          for (const r of tierRegions) {
+            if (r.test(lang.lat, lang.lon)) {
+              tierNum = parseInt(tierKey.replace('tier', ''));
+              break;
+            }
+          }
+          if (tierNum > 0) break;
+        }
       }
       if (tierNum >= 1 && tierNum <= 5) {
         tierCounts[tierNum].total++;
         if (matchSet.has(lang.value)) tierCounts[tierNum].feature++;
       }
     });
-
     const scores = [1, 2, 3, 4, 5];
     const n = [], x = [];
     for (let t = 1; t <= 5; t++) { n.push(tierCounts[t].total); x.push(tierCounts[t].feature); }
-
     const N = n.reduce((a, b) => a + b, 0);
     const X = x.reduce((a, b) => a + b, 0);
     if (N === 0 || X === 0 || X === N) return {z: 0, p: 1, direction: '—', tierPcts: n.map((ni, i) => ni > 0 ? x[i] / ni : 0)};
-
     const pBar = X / N;
-
     let T = 0;
     for (let i = 0; i < 5; i++) T += scores[i] * (x[i] - n[i] * pBar);
-
     let sumNT2 = 0, sumNT = 0;
     for (let i = 0; i < 5; i++) { sumNT2 += n[i] * scores[i] * scores[i]; sumNT += n[i] * scores[i]; }
     const varT = pBar * (1 - pBar) * (sumNT2 - (sumNT * sumNT) / N);
-
     if (varT <= 0) return {z: 0, p: 1, direction: '—', tierPcts: n.map((ni, i) => ni > 0 ? x[i] / ni : 0)};
-
     const z = T / Math.sqrt(varT);
     const p = 2 * (1 - Stats.normalCDF(Math.abs(z)));
     const direction = z < 0 ? '↓' : '↑';
-
     return {z: Math.round(z * 100) / 100, p, direction, tierPcts: n.map((ni, i) => ni > 0 ? x[i] / ni : 0)};
   },
   computePhyloControl(languages, featureValue, classification='wals') {
@@ -766,17 +765,26 @@ const Stats = {
       }
       if (!families[f]) families[f] = {total:0, inRef:0, hasFeature:false, langs:[]};
       families[f].total++;
-      // Determine tier
-      let tierNum = 0, tierName = 'Non-refugia';
-      for (const [tk, td] of Object.entries(TIER_STRUCTURE)) {
-        const tRegs = State.regions.filter(r => td.regions.includes(r.id));
-        for (const r of tRegs) {
-          if (r.test(l.lat, l.lon)) { tierNum = parseInt(tk.replace('tier','')); tierName = td.name; break; }
+      // Determine tier — custom-region tier assignment wins, else predefined
+      let tierNum = 0, tierName = 'Non-refugia', regionName = 'Unknown';
+      for (const cr of State.customRegions) {
+        if (cr.enabled && cr.tier && cr.test && cr.test(l.lat, l.lon)) {
+          tierNum = cr.tier;
+          tierName = TIER_STRUCTURE['tier' + cr.tier] ? TIER_STRUCTURE['tier' + cr.tier].name : ('Tier ' + cr.tier);
+          regionName = cr.name;
+          break;
         }
-        if (tierNum > 0) break;
       }
-      let regionName = 'Unknown';
-      for (const r of State.regions) { if (r.test(l.lat, l.lon)) { regionName = r.name; break; } }
+      if (tierNum === 0) {
+        for (const [tk, td] of Object.entries(TIER_STRUCTURE)) {
+          const tRegs = State.regions.filter(r => td.regions.includes(r.id));
+          for (const r of tRegs) {
+            if (r.test(l.lat, l.lon)) { tierNum = parseInt(tk.replace('tier','')); tierName = td.name; break; }
+          }
+          if (tierNum > 0) break;
+        }
+        for (const r of State.regions) { if (r.test(l.lat, l.lon)) { regionName = r.name; break; } }
+      }
       families[f].langs.push({id: l.id, name: l.name, value: l.value, valueLabel: l.valueLabel, tierNum, tierName, regionName, inRef: Stats.isInAnyRefugia(l), hasFeature: l.value === featureValue});
       if (Stats.isInAnyRefugia(l)) families[f].inRef++;
       if (l.value === featureValue) families[f].hasFeature = true;
@@ -1570,7 +1578,35 @@ const UI = {
       });
 
       container.appendChild(header);
-      State.customRegions.forEach(r => body.appendChild(UI._mkToggle(r, chapter)));
+      State.customRegions.forEach(r => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;gap:6px;';
+        row.appendChild(UI._mkToggle(r, chapter));
+
+        // Tier assignment dropdown (Option B: custom region overrides predefined tier)
+        const tierSelect = document.createElement('select');
+        tierSelect.style.cssText = 'font-size:10px;font-family:var(--font-mono);margin-left:auto;';
+        tierSelect.title = 'Assign this custom region to a tier (overrides predefined tier membership for languages inside it)';
+        const noneOpt = document.createElement('option');
+        noneOpt.value = '';
+        noneOpt.textContent = 'No tier';
+        tierSelect.appendChild(noneOpt);
+        for (let t = 1; t <= 5; t++) {
+          const opt = document.createElement('option');
+          opt.value = String(t);
+          opt.textContent = 'Tier ' + t;
+          if (r.tier === t) opt.selected = true;
+          tierSelect.appendChild(opt);
+        }
+        tierSelect.onchange = (e) => {
+          const v = e.target.value;
+          r.tier = v === '' ? undefined : parseInt(v);
+          if (chapter) App.updateAnalysis();
+        };
+        row.appendChild(tierSelect);
+
+        body.appendChild(row);
+      });
       container.appendChild(body);
     }
   },
@@ -1695,131 +1731,89 @@ const UI = {
   },
 
   _buildTierBreakdownTable(result, chapter) {
-    // Build tier-based breakdown
     const tierBreakdown = {};
     const keys = chapter.codeOrder.length ? chapter.codeOrder : Object.keys(result.byValue);
-    
-    // Initialize structure
+
+    // Resolve a language's tier: custom-region tier assignment wins, else predefined.
+    // Returns {tierNum, regionName} or null if in no tier.
+    const resolveTier = (lang) => {
+      for (const cr of State.customRegions) {
+        if (cr.enabled && cr.tier && cr.test && cr.test(lang.lat, lang.lon)) {
+          return {tierNum: cr.tier, regionName: cr.name};
+        }
+      }
+      for (let tierNum = 1; tierNum <= 5; tierNum++) {
+        const tierRegionIds = TIER_STRUCTURE['tier' + tierNum].regions;
+        const tierRegions = State.regions.filter(r => tierRegionIds.includes(r.id));
+        for (const r of tierRegions) {
+          if (r.test(lang.lat, lang.lon)) return {tierNum, regionName: r.name};
+        }
+      }
+      return null;
+    };
+
     for (let tierNum = 1; tierNum <= 5; tierNum++) {
       tierBreakdown[tierNum] = {
         name: TIER_STRUCTURE['tier' + tierNum].name,
         features: {}
       };
     }
-    
-    // For each feature value, count by tier and region
+
+    const tallyFeature = (langsWithFeature, denom, labelKey, label) => {
+      const perTier = {};
+      for (let t = 1; t <= 5; t++) perTier[t] = {regionCounts: {}, total: 0};
+      langsWithFeature.forEach(lang => {
+        const res = resolveTier(lang);
+        if (!res) return;
+        const bucket = perTier[res.tierNum];
+        if (!bucket) return;
+        if (!bucket.regionCounts[res.regionName]) bucket.regionCounts[res.regionName] = {name: res.regionName, count: 0};
+        bucket.regionCounts[res.regionName].count++;
+        bucket.total++;
+      });
+      for (let t = 1; t <= 5; t++) {
+        const bucket = perTier[t];
+        if (bucket.total > 0) {
+          const pct = denom > 0 ? ((bucket.total / denom) * 100).toFixed(1) : '0.0';
+          const sortedRegions = Object.values(bucket.regionCounts)
+            .filter(rc => rc.count > 0)
+            .sort((a, b) => b.count - a.count);
+          tierBreakdown[t].features[labelKey] = {label, count: bucket.total, pct, regions: sortedRegions};
+        }
+      }
+    };
+
     keys.forEach(code => {
       const v = result.byValue[code];
       if (!v) return;
-      
-      // Get all languages with this feature
       const langsWithFeature = chapter.languages.filter(l => l.value === code);
-      
-      // Group by tier
-      for (let tierNum = 1; tierNum <= 5; tierNum++) {
-        const tierKey = 'tier' + tierNum;
-        const tierRegionIds = TIER_STRUCTURE[tierKey].regions;
-        const tierRegions = State.regions.filter(r => tierRegionIds.includes(r.id));
-        
-        // Count languages in this tier for this feature
-        const regionCounts = {};
-        let tierTotal = 0;
-        
-        langsWithFeature.forEach(lang => {
-          for (const r of tierRegions) {
-            if (r.test(lang.lat, lang.lon)) {
-              if (!regionCounts[r.id]) regionCounts[r.id] = {name: r.name, count: 0};
-              regionCounts[r.id].count++;
-              tierTotal++;
-              break; // Each language only counts once per tier
-            }
-          }
-        });
-        
-        if (tierTotal > 0) {
-          const pct = v.total > 0 ? ((tierTotal / v.total) * 100).toFixed(1) : '0.0';
-          
-          // Sort regions by count (highest first)
-          const sortedRegions = Object.values(regionCounts)
-            .filter(rc => rc.count > 0)
-            .sort((a, b) => b.count - a.count);
-          
-          tierBreakdown[tierNum].features[code] = {
-            label: v.label,
-            count: tierTotal,
-            pct: pct,
-            regions: sortedRegions
-          };
-        }
-      }
+      tallyFeature(langsWithFeature, v.total, code, v.label);
     });
-    
-    // Also do composite rows
+
     State.compositeRows.forEach((cr, idx) => {
       const langsWithFeature = chapter.languages.filter(l => cr.codes.has(l.value));
-      
-      for (let tierNum = 1; tierNum <= 5; tierNum++) {
-        const tierKey = 'tier' + tierNum;
-        const tierRegionIds = TIER_STRUCTURE[tierKey].regions;
-        const tierRegions = State.regions.filter(r => tierRegionIds.includes(r.id));
-        
-        const regionCounts = {};
-        let tierTotal = 0;
-        
-        langsWithFeature.forEach(lang => {
-          for (const r of tierRegions) {
-            if (r.test(lang.lat, lang.lon)) {
-              if (!regionCounts[r.id]) regionCounts[r.id] = {name: r.name, count: 0};
-              regionCounts[r.id].count++;
-              tierTotal++;
-              break;
-            }
-          }
-        });
-        
-        if (tierTotal > 0) {
-          const totalWithComposite = langsWithFeature.length;
-          const pct = totalWithComposite > 0 ? ((tierTotal / totalWithComposite) * 100).toFixed(1) : '0.0';
-          
-          const sortedRegions = Object.values(regionCounts)
-            .filter(rc => rc.count > 0)
-            .sort((a, b) => b.count - a.count);
-          
-          const compositeKey = 'composite_' + idx;
-          tierBreakdown[tierNum].features[compositeKey] = {
-            label: cr.name + ' (composite)',
-            count: tierTotal,
-            pct: pct,
-            regions: sortedRegions
-          };
-        }
-      }
+      tallyFeature(langsWithFeature, langsWithFeature.length, 'composite_' + idx, cr.name + ' (composite)');
     });
-    
+
     // Render table
     let html = '<table class="stats-table">';
     html += '<tr><th>Tier</th><th>Feature Value</th><th class="num">Count</th><th class="num">% of Feature</th><th>Regions (sorted by count)</th></tr>';
-    
+
     for (let tierNum = 1; tierNum <= 5; tierNum++) {
       const tier = tierBreakdown[tierNum];
       const featureKeys = Object.keys(tier.features);
-      
       if (featureKeys.length === 0) continue;
-      
       featureKeys.forEach((fkey, idx) => {
         const f = tier.features[fkey];
-        const tierCell = idx === 0 
-          ? `<td rowspan="${featureKeys.length}" style="vertical-align:top;font-weight:600;color:var(--text-muted)">${tier.name}</td>` 
+        const tierCell = idx === 0
+          ? `<td rowspan="${featureKeys.length}" style="vertical-align:top;font-weight:600;color:var(--text-muted)">${tier.name}</td>`
           : '';
-        
         const regionList = f.regions.map(r => `${r.name} (${r.count})`).join(', ');
         const isComposite = fkey.startsWith('composite_');
         const labelStyle = isComposite ? 'font-style:italic' : '';
-        
         html += `<tr>${tierCell}<td style="${labelStyle}">${f.label}</td><td class="num">${f.count}</td><td class="num">${f.pct}%</td><td style="font-size:11px">${regionList}</td></tr>`;
       });
     }
-    
     html += '</table>';
     return html;
   },
@@ -2427,32 +2421,44 @@ const App = {
     const d = (allCommon.length - matchingLangs.length) - c;
     const chiResult = (a + b > 0 && c + d > 0 && a + b < allCommon.length) ? Stats.chiSquare(a, b, c, d) : {chi2: '—', p: 1};
     
-    // Group by tier
+    // Group by tier — custom-region tier assignment wins, else predefined
     const tierGroups = {};
     matchingLangs.forEach(lang => {
       let tierName = 'Unassigned';
       let tierNum = 99;
-      
-      for (const [tierKey, tierData] of Object.entries(TIER_STRUCTURE)) {
-        const tierRegions = State.regions.filter(r => tierData.regions.includes(r.id));
-        for (const r of tierRegions) {
-          if (r.test(lang.lat, lang.lon)) {
-            tierName = tierData.name;
-            tierNum = parseInt(tierKey.replace('tier', ''));
-            break;
-          }
-        }
-        if (tierNum !== 99) break;
-      }
-      
       let regionName = 'Unknown';
-      for (const r of State.regions) {
-        if (r.test(lang.lat, lang.lon)) {
-          regionName = r.name;
+
+      // Custom regions with an assigned tier take priority
+      for (const cr of State.customRegions) {
+        if (cr.enabled && cr.tier && cr.test && cr.test(lang.lat, lang.lon)) {
+          tierNum = cr.tier;
+          tierName = TIER_STRUCTURE['tier' + cr.tier] ? TIER_STRUCTURE['tier' + cr.tier].name : ('Tier ' + cr.tier);
+          regionName = cr.name;
           break;
         }
       }
-      
+
+      // Fall back to predefined tier structure
+      if (tierNum === 99) {
+        for (const [tierKey, tierData] of Object.entries(TIER_STRUCTURE)) {
+          const tierRegions = State.regions.filter(r => tierData.regions.includes(r.id));
+          for (const r of tierRegions) {
+            if (r.test(lang.lat, lang.lon)) {
+              tierName = tierData.name;
+              tierNum = parseInt(tierKey.replace('tier', ''));
+              break;
+            }
+          }
+          if (tierNum !== 99) break;
+        }
+        for (const r of State.regions) {
+          if (r.test(lang.lat, lang.lon)) {
+            regionName = r.name;
+            break;
+          }
+        }
+      }
+
       if (!tierGroups[tierNum]) {
         tierGroups[tierNum] = {name: tierName, langs: []};
       }
